@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Container, 
   TextField, 
@@ -9,27 +9,72 @@ import {
   Box, 
   Grid, 
   Alert,
-  IconButton
+  IconButton,
+  Snackbar,
+  InputAdornment,
+  CircularProgress
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { useAuth } from '../contexts/AuthContext';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [notification, setNotification] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
+
+  // 檢查是否有從其他頁面傳來的註冊成功通知
+  useEffect(() => {
+    // 檢查來自註冊頁面的成功訊息
+    if (location.state?.from === 'register' && location.state?.success) {
+      setNotification({
+        open: true,
+        message: '註冊成功！請使用您的帳號密碼登入',
+        severity: 'success'
+      });
+      
+      // 清除location.state，避免重新整理頁面時再次顯示通知
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    
+    if (!email.trim()) {
+      setError('請輸入電子郵件');
+      return;
+    }
+    
+    if (!password) {
+      setError('請輸入密碼');
+      return;
+    }
+    
     setError('');
     setLoading(true);
 
     try {
       await login(email, password);
-      navigate('/');
+      setNotification({
+        open: true,
+        message: '登入成功！',
+        severity: 'success'
+      });
+      setTimeout(() => {
+        navigate('/');
+      }, 1000);
     } catch (error) {
       console.error('登入失敗:', error);
       switch (error.code) {
@@ -53,8 +98,26 @@ const Login = () => {
     }
   };
 
+  const handleCloseNotification = () => {
+    setNotification({ ...notification, open: false });
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   return (
     <Container component="main" maxWidth="xs">
+      <Snackbar 
+        open={notification.open} 
+        autoHideDuration={6000} 
+        onClose={handleCloseNotification}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseNotification} severity={notification.severity} sx={{ width: '100%' }}>
+          {notification.message}
+        </Alert>
+      </Snackbar>
       <Box 
         sx={{ 
           mt: 8, 
@@ -63,16 +126,6 @@ const Login = () => {
           alignItems: 'center' 
         }}
       >
-        <Box sx={{ position: 'absolute', top: 90, right: 24 }}>
-          <IconButton 
-            component={Link} 
-            to="/" 
-            color="primary" 
-            aria-label="返回首頁"
-          >
-            <ArrowBackIcon /> <Typography variant="button" sx={{ ml: 1 }}>返回首頁</Typography>
-          </IconButton>
-        </Box>
 
         <Paper 
           elevation={3} 
@@ -81,11 +134,14 @@ const Login = () => {
             display: 'flex', 
             flexDirection: 'column', 
             alignItems: 'center',
-            width: '100%'
+            width: '100%',
+            borderRadius: 2,
+            bgcolor: 'background.paper',
+            boxShadow: '0 3px 15px rgba(0,0,0,0.1)'
           }}
         >
-          <Typography component="h1" variant="h5" sx={{ mb: 3 }}>
-            登入
+          <Typography component="h1" variant="h5" sx={{ mb: 3, fontWeight: 'bold', color: 'primary.main' }}>
+            帳號登入
           </Typography>
           
           {error && <Alert severity="error" sx={{ width: '100%', mb: 2 }}>{error}</Alert>}
@@ -101,7 +157,11 @@ const Login = () => {
               autoComplete="email"
               autoFocus
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError('');
+              }}
+              sx={{ mb: 2 }}
             />
             <TextField
               margin="normal"
@@ -109,11 +169,28 @@ const Login = () => {
               fullWidth
               name="password"
               label="密碼"
-              type="password"
+              type={showPassword ? "text" : "password"}
               id="password"
               autoComplete="current-password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError('');
+              }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={togglePasswordVisibility}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ mb: 3 }}
             />
             <Button
               type="submit"
@@ -121,29 +198,39 @@ const Login = () => {
               variant="contained"
               color="primary"
               disabled={loading}
-              sx={{ mt: 3, mb: 2 }}
+              sx={{ 
+                mt: 2, 
+                mb: 3, 
+                py: 1.2,
+                fontWeight: 'bold',
+                borderRadius: 2
+              }}
             >
-              {loading ? '登入中...' : '登入'}
+              {loading ? <CircularProgress size={24} color="inherit" /> : '登入'}
             </Button>
-            <Grid container>
-              <Grid item xs>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
                 <Button 
                   component={Link} 
                   to="/forgot-password" 
                   variant="text" 
                   size="small"
+                  fullWidth
+                  sx={{ textAlign: 'center' }}
                 >
                   忘記密碼？
                 </Button>
               </Grid>
-              <Grid item>
+              <Grid item xs={12} sm={6}>
                 <Button 
                   component={Link} 
                   to="/register" 
-                  variant="text" 
+                  variant="outlined" 
                   size="small"
+                  fullWidth
+                  sx={{ textAlign: 'center' }}
                 >
-                  還沒有帳號？點此註冊
+                  立即註冊新帳號
                 </Button>
               </Grid>
             </Grid>

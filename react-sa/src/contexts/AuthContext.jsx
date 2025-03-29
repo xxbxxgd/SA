@@ -24,6 +24,9 @@ export function AuthProvider({ children }) {
   // 註冊新用戶
   const signup = async (email, password, name) => {
     try {
+      // 在開始註冊前先清除任何舊的錯誤
+      setError('');
+      
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
@@ -51,10 +54,14 @@ export function AuthProvider({ children }) {
       });
       
       console.log('用戶資料已成功存入Firestore');
+      
+      // 註冊後立即登出用戶，防止自動登入
+      await signOut(auth);
+      
       return user;
     } catch (error) {
       console.error('註冊失敗:', error);
-      setError(error.message);
+      setError(error.message || '註冊過程中發生錯誤');
       throw error;
     }
   };
@@ -62,6 +69,9 @@ export function AuthProvider({ children }) {
   // 登入
   const login = async (email, password) => {
     try {
+      // 在開始登入前清除錯誤
+      setError('');
+      
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
@@ -76,7 +86,7 @@ export function AuthProvider({ children }) {
       
       return user;
     } catch (error) {
-      setError(error.message);
+      setError(error.message || '登入過程中發生錯誤');
       throw error;
     }
   };
@@ -84,9 +94,10 @@ export function AuthProvider({ children }) {
   // 登出
   const logout = async () => {
     try {
+      setError('');
       await signOut(auth);
     } catch (error) {
-      setError(error.message);
+      setError(error.message || '登出過程中發生錯誤');
       throw error;
     }
   };

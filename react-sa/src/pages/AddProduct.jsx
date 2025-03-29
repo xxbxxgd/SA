@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Container, Form, Button, Alert, Spinner } from 'react-bootstrap';
-import { collection, addDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -143,6 +143,10 @@ const AddProduct = () => {
         throw new Error('請上傳至少一張商品圖片');
       }
       
+      if (!category || category === '') {
+        throw new Error('請選擇有效的商品分類');
+      }
+      
       // 壓縮並獲取Base64圖片數據
       const imageBase64List = await convertImagesToBase64();
       
@@ -157,14 +161,16 @@ const AddProduct = () => {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         userId: currentUser.uid,
+        userEmail: currentUser.email,
+        userName: currentUser.displayName || '未知用戶',
         images: imageBase64List  // 存儲壓縮後的Base64圖片
       };
       
-      const docRef = await addDoc(collection(db, 'products'), productData);
+      await addDoc(collection(db, 'products'), productData);
       
       setSuccess(true);
       setTimeout(() => {
-        navigate('/products');
+        navigate('/my-products');
       }, 2000);
     } catch (err) {
       setError(err.message);
@@ -172,6 +178,12 @@ const AddProduct = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 處理類別選擇變更
+  const handleCategoryChange = (e) => {
+    const selectedCategory = e.target.value;
+    setCategory(selectedCategory);
   };
 
   return (
@@ -217,7 +229,7 @@ const AddProduct = () => {
           <Form.Label>類別 *</Form.Label>
           <Form.Select 
             value={category} 
-            onChange={(e) => setCategory(e.target.value)}
+            onChange={handleCategoryChange}
             required
           >
             <option value="">選擇類別</option>

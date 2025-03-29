@@ -1,39 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Typography, Grid, Box, CircularProgress, Alert } from '@mui/material';
-import { collection, getDocs, query, limit, where } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import ProductCard from '../components/ProductCard';
 import SearchBar from '../components/SearchBar';
-import { useAuth } from '../contexts/AuthContext';
 
-const Home = ({ currentCategory }) => {
+const SearchResults = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const { currentUser } = useAuth();
+  const location = useLocation();
+  
+  // 從URL獲取搜索查詢參數
+  const searchQuery = new URLSearchParams(location.search).get('q') || '';
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchSearchResults = async () => {
+      if (!searchQuery.trim()) {
+        setProducts([]);
+        setLoading(false);
+        return;
+      }
+      
       setLoading(true);
       setError('');
+      
       try {
-        let productQuery;
+        console.log(`正在搜索: "${searchQuery}"`);
         
-        if (currentCategory && currentCategory !== 'all') {
-          productQuery = query(
-            collection(db, 'products'),
-            where('category', '==', currentCategory),
-            limit(12)
-          );
-        } else {
-          productQuery = query(
-            collection(db, 'products'),
-            limit(12)
-          );
-        }
+        // 獲取所有商品
+        const productsQuery = query(
+          collection(db, 'products'),
+          orderBy('createdAt', 'desc')
+        );
         
-        const querySnapshot = await getDocs(productQuery);
-        const productsData = [];
+        const querySnapshot = await getDocs(productsQuery);
+        let productsData = [];
         
         querySnapshot.forEach((doc) => {
           productsData.push({
@@ -42,25 +47,35 @@ const Home = ({ currentCategory }) => {
           });
         });
         
-        // 在前端進行按創建時間排序
-        productsData.sort((a, b) => {
-          if (a.createdAt && b.createdAt) {
-            return b.createdAt.seconds - a.createdAt.seconds;
-          }
-          return 0;
+        // 在本地過濾符合搜索條件的商品
+        // 這裡使用本地過濾是因為Firestore不支持全文搜索
+        const searchTerms = searchQuery.toLowerCase().split(' ').filter(term => term.length > 0);
+        
+        productsData = productsData.filter(product => {
+          const productName = (product.name || '').toLowerCase();
+          const productDescription = (product.description || '').toLowerCase();
+          const productCategory = (product.category || '').toLowerCase();
+          
+          // 檢查所有搜索詞是否至少匹配一個字段
+          return searchTerms.some(term => 
+            productName.includes(term) || 
+            productDescription.includes(term) ||
+            productCategory.includes(term)
+          );
         });
         
+        console.log(`找到 ${productsData.length} 個符合搜索條件的商品`);
         setProducts(productsData);
-      } catch (error) {
-        console.error('獲取商品失敗:', error);
-        setError('無法載入商品，請稍後再試');
+      } catch (err) {
+        console.error('搜索商品失敗:', err);
+        setError('搜索失敗，請稍後再試');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProducts();
-  }, [currentCategory]);
+    fetchSearchResults();
+  }, [searchQuery]);
 
   return (
     <Container maxWidth="lg" sx={{ mt: 2, mb: 4 }}>
@@ -70,9 +85,7 @@ const Home = ({ currentCategory }) => {
 
       <Box sx={{ mb: 2 }}>
         <Typography variant="h5" component="h2" gutterBottom>
-          {currentCategory === 'all' || !currentCategory 
-            ? '最新商品' 
-            : `${currentCategory}商品`}
+          "{searchQuery}" 的搜索結果
         </Typography>
         
         {error && (
@@ -104,7 +117,7 @@ const Home = ({ currentCategory }) => {
             borderRadius: 2
           }}>
             <Typography variant="body1" color="text.secondary">
-              目前沒有上架的商品
+              沒有找到符合 "{searchQuery}" 的商品
             </Typography>
           </Box>
         )}
@@ -113,4 +126,4 @@ const Home = ({ currentCategory }) => {
   );
 };
 
-export default Home; 
+export default SearchResults; 
