@@ -117,19 +117,28 @@ const Register = () => {
       setCountdown(3); // 設置3秒倒數計時
     } catch (error) {
       console.error('註冊失敗:', error);
+      console.error('錯誤完整信息:', JSON.stringify(error));
+      console.error('錯誤代碼:', error.code);
+      console.error('錯誤消息:', error.message);
+      
       setSuccess(false); // 確保發生錯誤時重置成功狀態
-      switch (error.code) {
-        case 'auth/email-already-in-use':
-          setError('此電子郵件已被註冊');
-          break;
-        case 'auth/invalid-email':
-          setError('無效的電子郵件格式');
-          break;
-        case 'auth/weak-password':
-          setError('密碼強度不足');
-          break;
-        default:
-          setError('註冊失敗，請稍後再試');
+      
+      if (error.code) {
+        switch (error.code) {
+          case 'auth/email-already-in-use':
+            setError('此電子郵件已被註冊');
+            break;
+          case 'auth/invalid-email':
+            setError('無效的電子郵件格式');
+            break;
+          case 'auth/weak-password':
+            setError('密碼強度不足');
+            break;
+          default:
+            setError(`註冊失敗: ${error.message || '請稍後再試'}`);
+        }
+      } else {
+        setError(`註冊失敗: ${error.message || '請稍後再試'}`);
       }
     } finally {
       setLoading(false);
@@ -155,16 +164,6 @@ const Register = () => {
           alignItems: 'center' 
         }}
       >
-        <Box sx={{ position: 'absolute', top: 20, left: 20 }}>
-          <IconButton 
-            component={Link} 
-            to="/" 
-            color="primary" 
-            aria-label="返回首頁"
-          >
-            <ArrowBackIcon /> <Typography variant="button" sx={{ ml: 1 }}>返回首頁</Typography>
-          </IconButton>
-        </Box>
 
         <Paper 
           elevation={3} 
