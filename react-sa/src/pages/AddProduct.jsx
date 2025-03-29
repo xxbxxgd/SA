@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Container, Form, Button, Alert, Spinner } from 'react-bootstrap';
 import { collection, addDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../firebase/config';
+import { db } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,6 +11,7 @@ const AddProduct = () => {
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState('');
   const [stock, setStock] = useState('');
+  const [location, setLocation] = useState('');
   const [images, setImages] = useState([]);
   const [imageFiles, setImageFiles] = useState([]);
   const [error, setError] = useState('');
@@ -21,29 +21,107 @@ const AddProduct = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
+  // 輔大宿舍列表
+  const dormitoryOptions = [
+    { value: '文園宿舍', label: '文園宿舍' },
+    { value: '格物學苑宿舍', label: '格物學苑宿舍' },
+    { value: '信義和平學苑宿舍', label: '信義和平學苑宿舍' },
+    { value: '立言學苑宿舍', label: '立言學苑宿舍' },
+    { value: '宜聖學苑宿舍', label: '宜聖學苑宿舍' },
+    { value: '其他', label: '其他' }
+  ];
+
   // 處理圖片上傳預覽
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    setImageFiles(files);
     
-    const previewURLs = files.map(file => URL.createObjectURL(file));
-    setImages(previewURLs);
-  };
-
-  // 上傳圖片到 Firebase Storage
-  const uploadImages = async (productId) => {
-    const imageUrls = [];
-    
-    for (let i = 0; i < imageFiles.length; i++) {
-      const file = imageFiles[i];
-      const storageRef = ref(storage, `products/${productId}/${Date.now()}_${file.name}`);
-      
-      await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(storageRef);
-      imageUrls.push(downloadURL);
+    if (files.length > 5) {
+      setError('最多只能上傳5張圖片');
+      return;
     }
     
-    return imageUrls;
+    // 檢查文件大小
+    for (const file of files) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB上限
+        setError('圖片大小不能超過2MB');
+        return;
+      }
+    }
+    
+    setImageFiles(files);
+    setError(''); // 清除錯誤消息
+    
+    // 創建預覽
+    const previewURLs = [];
+    
+    files.forEach((file) => {
+      const fileReader = new FileReader();
+      
+      fileReader.onload = () => {
+        previewURLs.push(fileReader.result);
+        if (previewURLs.length === files.length) {
+          setImages(previewURLs);
+        }
+      };
+      
+      fileReader.readAsDataURL(file);
+    });
+  };
+
+  // 壓縮圖片並轉換為Base64
+  const compressAndConvertToBase64 = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        
+        img.onload = () => {
+          // 創建canvas進行壓縮
+          const canvas = document.createElement('canvas');
+          // 設定適當的尺寸，控制大小，最大寬度或高度為800像素
+          const MAX_SIZE = 800;
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height = Math.round((height * MAX_SIZE) / width);
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width = Math.round((width * MAX_SIZE) / height);
+              height = MAX_SIZE;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // 壓縮為JPEG，品質0.7（70%）
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+          resolve(compressedBase64);
+        };
+      };
+    });
+  };
+
+  // 處理所有圖片壓縮
+  const convertImagesToBase64 = async () => {
+    const compressedImages = [];
+    
+    for (const file of imageFiles) {
+      const compressed = await compressAndConvertToBase64(file);
+      compressedImages.push(compressed);
+    }
+    
+    return compressedImages;
   };
 
   // 提交表單
@@ -57,7 +135,7 @@ const AddProduct = () => {
         throw new Error('請先登入');
       }
       
-      if (!name || !price || !category || !stock) {
+      if (!name || !price || !category || !stock || !location) {
         throw new Error('請填寫所有必填欄位');
       }
       
@@ -65,28 +143,24 @@ const AddProduct = () => {
         throw new Error('請上傳至少一張商品圖片');
       }
       
-      // 先加入產品到 Firestore
+      // 壓縮並獲取Base64圖片數據
+      const imageBase64List = await convertImagesToBase64();
+      
+      // 直接將產品數據與圖片一起保存到Firestore
       const productData = {
         name,
         description,
         price: Number(price),
         category,
         stock: Number(stock),
+        location,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         userId: currentUser.uid,
-        images: [] // 初始為空，稍後更新
+        images: imageBase64List  // 存儲壓縮後的Base64圖片
       };
       
       const docRef = await addDoc(collection(db, 'products'), productData);
-      
-      // 上傳圖片並獲取 URL
-      const imageUrls = await uploadImages(docRef.id);
-      
-      // 更新產品文檔添加圖片 URL
-      await updateDoc(docRef, {
-        images: imageUrls
-      });
       
       setSuccess(true);
       setTimeout(() => {
@@ -147,13 +221,30 @@ const AddProduct = () => {
             required
           >
             <option value="">選擇類別</option>
-            <option value="electronics">電子產品</option>
-            <option value="clothing">服飾</option>
-            <option value="food">食品</option>
-            <option value="books">書籍</option>
-            <option value="toys">玩具</option>
-            <option value="homeware">家居用品</option>
-            <option value="other">其他</option>
+            <option value="家具家電">家具家電</option>
+            <option value="書籍教材">書籍教材</option>
+            <option value="生活用品">生活用品</option>
+            <option value="3C產品">3C產品</option>
+            <option value="服飾">服飾</option>
+            <option value="交通工具">交通工具</option>
+            <option value="美妝保養">美妝保養</option>
+            <option value="其他">其他</option>
+          </Form.Select>
+        </Form.Group>
+        
+        <Form.Group className="mb-3">
+          <Form.Label>宿舍位置 *</Form.Label>
+          <Form.Select 
+            value={location} 
+            onChange={(e) => setLocation(e.target.value)}
+            required
+          >
+            <option value="">選擇宿舍位置</option>
+            {dormitoryOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </Form.Select>
         </Form.Group>
         
@@ -177,7 +268,7 @@ const AddProduct = () => {
             accept="image/*"
           />
           <Form.Text className="text-muted">
-            最多可上傳5張圖片
+            最多可上傳5張圖片，每張不超過2MB
           </Form.Text>
         </Form.Group>
         

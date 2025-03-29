@@ -141,6 +141,10 @@ const ProductDetail = () => {
                 <td>{product.category}</td>
               </tr>
               <tr>
+                <th>宿舍位置</th>
+                <td>{product.location || '無指定位置'}</td>
+              </tr>
+              <tr>
                 <th>庫存</th>
                 <td>{product.stock}</td>
               </tr>

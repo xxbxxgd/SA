@@ -18,6 +18,31 @@ const ProductCard = ({ product }) => {
     navigate(`/product/${product.id}`);
   };
   
+  // 格式化時間戳
+  const formatDate = (timestamp) => {
+    if (!timestamp) return '';
+    
+    try {
+      // 處理不同類型的時間戳
+      if (timestamp.toDate) {
+        // Firestore Timestamp 對象
+        return timestamp.toDate().toLocaleDateString('zh-TW');
+      } else if (timestamp.seconds) {
+        // Timestamp 被轉換為帶 seconds 的對象
+        return new Date(timestamp.seconds * 1000).toLocaleDateString('zh-TW');
+      } else if (typeof timestamp === 'string') {
+        // ISO 字串格式
+        return new Date(timestamp).toLocaleDateString('zh-TW');
+      }
+      
+      // 其他格式，嘗試直接轉換
+      return new Date(timestamp).toLocaleDateString('zh-TW');
+    } catch (error) {
+      console.error('日期格式化錯誤:', error);
+      return '';
+    }
+  };
+  
   return (
     <Card 
       sx={{ 
@@ -36,7 +61,7 @@ const ProductCard = ({ product }) => {
         <CardMedia
           component="img"
           height="200"
-          image={product.imageUrl || 'https://via.placeholder.com/300x200?text=無圖片'}
+          image={product.images && product.images.length > 0 ? product.images[0] : (product.imageUrl || 'https://via.placeholder.com/300x200?text=無圖片')}
           alt={product.name}
           sx={{ objectFit: 'cover' }}
         />
@@ -50,7 +75,7 @@ const ProductCard = ({ product }) => {
               sx={{ height: '20px', fontSize: '0.7rem' }}
             />
             <Typography variant="caption" color="text.secondary">
-              {new Date(product.createdAt).toLocaleDateString()}
+              {product.createdAt ? formatDate(product.createdAt) : ''}
             </Typography>
           </Box>
           

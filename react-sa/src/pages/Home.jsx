@@ -58,7 +58,7 @@ const Home = ({ currentCategory }) => {
       name: '二手微波爐',
       price: 1200,
       category: '家具家電',
-      location: '輔大周邊',
+      location: '文舍',
       createdAt: new Date().toISOString(),
       imageUrl: 'https://via.placeholder.com/300x200?text=微波爐'
     },
@@ -67,7 +67,7 @@ const Home = ({ currentCategory }) => {
       name: '商管數學課本',
       price: 350,
       category: '書籍教材',
-      location: '輔大校內',
+      location: '文德宿舍',
       createdAt: new Date().toISOString(),
       imageUrl: 'https://via.placeholder.com/300x200?text=商管數學'
     },
@@ -75,8 +75,8 @@ const Home = ({ currentCategory }) => {
       id: '3',
       name: '腳踏車',
       price: 2500,
-      category: '生活用品',
-      location: '新莊區',
+      category: '交通工具',
+      location: '輔大周邊',
       createdAt: new Date().toISOString(),
       imageUrl: 'https://via.placeholder.com/300x200?text=腳踏車'
     },
@@ -85,7 +85,7 @@ const Home = ({ currentCategory }) => {
       name: '二手筆電',
       price: 9800,
       category: '3C產品',
-      location: '輔大周邊',
+      location: '格物學苑宿舍',
       createdAt: new Date().toISOString(),
       imageUrl: 'https://via.placeholder.com/300x200?text=筆電'
     },

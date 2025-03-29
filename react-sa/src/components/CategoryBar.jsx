@@ -4,10 +4,14 @@ import { Box, Button, Container } from '@mui/material';
 
 const categories = [
   { id: 'all', label: '全部分類', path: '/' },
-  { id: 'furniture', label: '家具家電', path: '/category/furniture' },
-  { id: 'books', label: '書籍教材', path: '/category/books' },
-  { id: 'daily', label: '生活用品', path: '/category/daily' },
-  { id: 'electronics', label: '3C產品', path: '/category/electronics' }
+  { id: '家具家電', label: '家具家電', path: '/category/家具家電' },
+  { id: '書籍教材', label: '書籍教材', path: '/category/書籍教材' },
+  { id: '生活用品', label: '生活用品', path: '/category/生活用品' },
+  { id: '3C產品', label: '3C產品', path: '/category/3C產品' },
+  { id: '服飾', label: '服飾', path: '/category/服飾' },
+  { id: '交通工具', label: '交通工具', path: '/category/交通工具' },
+  { id: '美妝保養', label: '美妝保養', path: '/category/美妝保養' },
+  { id: '其他', label: '其他', path: '/category/其他' }
 ];
 
 const CategoryBar = ({ currentCategory }) => {
