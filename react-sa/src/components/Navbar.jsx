@@ -16,12 +16,17 @@ import {
   DialogContentText,
   DialogTitle,
   Snackbar,
-  Alert
+  Alert,
+  Badge
 } from '@mui/material';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import { useAuth } from '../contexts/AuthContext';
+import { useCart } from '../contexts/CartContext';
+import '../styles/layout/Navbar.css';
 
 const Navbar = () => {
   const { currentUser, logout } = useAuth();
+  const { getCartCount } = useCart();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
@@ -96,9 +101,7 @@ const Navbar = () => {
             輔仁大學外宿生二手交易平台
           </Typography>
 
-          {/* 搜尋欄 - 將在CategoryBar或首頁顯示 */}
-
-          {/* 商品鏈接 - 所有人都可見，現在指向首頁 */}
+          {/* 商品鏈接 */}
           <Button 
             component={Link} 
             to="/" 
@@ -111,6 +114,30 @@ const Navbar = () => {
           {/* 未登入顯示登入註冊，已登入顯示個人資料 */}
           {currentUser ? (
             <Box>
+              <Button 
+                component={Link} 
+                to="/my-products" 
+                color="inherit"
+                sx={{ mr: 2 }}
+              >
+                共用專區
+              </Button>
+              <Button 
+                component={Link} 
+                to="/my-products" 
+                color="inherit"
+                sx={{ mr: 2 }}
+              >
+                贈送專區
+              </Button>
+              <Button 
+                component={Link} 
+                to="/my-products" 
+                color="inherit"
+                sx={{ mr: 2 }}
+              >
+                交換專區
+              </Button>             
               <Button 
                 component={Link} 
                 to="/add-product" 
@@ -127,6 +154,17 @@ const Navbar = () => {
               >
                 我的商品
               </Button>
+              {/* 購物車圖示 */}
+              <IconButton
+                component={Link}
+                to="/cart"
+                color="inherit"
+                sx={{ mr: 2 }}
+              >
+                <Badge badgeContent={getCartCount()} color="error">
+                  <ShoppingCartIcon />
+                </Badge>
+              </IconButton>
               <IconButton
                 size="large"
                 edge="end"

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { ThemeProvider, createTheme } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import { AuthProvider } from './contexts/AuthContext';
+import { CartProvider } from './contexts/CartContext';
 
 // 組件
 import Navbar from './components/Navbar';
@@ -20,6 +21,9 @@ import AddProduct from './pages/AddProduct';
 import CategoryPage from './pages/CategoryPage';
 import MyProducts from './pages/MyProducts';
 import SearchResults from './pages/SearchResults';
+import EditProduct from './pages/EditProduct';
+import DeleteProduct from './pages/DeleteProduct';
+import Cart from './pages/Cart';
 
 // 創建主題
 const theme = createTheme({
@@ -87,6 +91,9 @@ const AppRouter = () => {
           <Route path="/category/:categoryId" element={<CategoryPage />} />
           <Route path="/my-products" element={<MyProducts />} />
           <Route path="/search" element={<SearchResults />} />
+          <Route path="/edit-product/:id" element={<EditProduct />} />
+          <Route path="/delete-product/:id" element={<DeleteProduct />} />
+          <Route path="/cart" element={<Cart />} />
           {/* 之後添加其他頁面的路由 */}
         </Routes>
       </main>
@@ -100,9 +107,11 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        <Router>
-          <AppRouter />
-        </Router>
+        <CartProvider>
+          <Router>
+            <AppRouter />
+          </Router>
+        </CartProvider>
       </AuthProvider>
     </ThemeProvider>
   );

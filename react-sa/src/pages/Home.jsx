@@ -5,6 +5,7 @@ import { db } from '../firebase/config';
 import ProductCard from '../components/ProductCard';
 import SearchBar from '../components/SearchBar';
 import { useAuth } from '../contexts/AuthContext';
+import '../styles/pages/Home.css';
 
 const Home = ({ currentCategory }) => {
   const [products, setProducts] = useState([]);
@@ -63,17 +64,19 @@ const Home = ({ currentCategory }) => {
   }, [currentCategory]);
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 2, mb: 4 }}>
+    <Container maxWidth="lg" className="homeContainer">
       <Box sx={{ mb: 2 }}>
         <SearchBar fullWidth />
       </Box>
 
       <Box sx={{ mb: 2 }}>
-        <Typography variant="h5" component="h2" gutterBottom>
-          {currentCategory === 'all' || !currentCategory 
-            ? '最新商品' 
-            : `${currentCategory}商品`}
-        </Typography>
+        <div className="sectionHeader">
+          <Typography variant="h5" component="h2" className="sectionTitle">
+            {currentCategory === 'all' || !currentCategory 
+              ? '最新商品' 
+              : `${currentCategory}商品`}
+          </Typography>
+        </div>
         
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -82,11 +85,11 @@ const Home = ({ currentCategory }) => {
         )}
         
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+          <Box className="loadingIndicator">
             <CircularProgress />
           </Box>
         ) : products.length > 0 ? (
-          <Grid container spacing={3}>
+          <Grid container spacing={3} className="productsGrid">
             {products.map((product) => (
               <Grid item key={product.id} xs={12} sm={6} md={4} lg={3}>
                 <ProductCard 

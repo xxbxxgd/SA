@@ -12,20 +12,21 @@ import {
   IconButton,
   Snackbar,
   InputAdornment,
-  CircularProgress
+  CircularProgress,
+  Stack
 } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { useAuth } from '../contexts/AuthContext';
+import '../styles/pages/Login.css';
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, validateEmail, validatePassword, error: authError, setError } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [localError, setLocalError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [notification, setNotification] = useState({
@@ -49,20 +50,41 @@ const Login = () => {
     }
   }, [location]);
 
+  // 當authError發生變化時，更新本地錯誤狀態
+  useEffect(() => {
+    if (authError) {
+      setLocalError(authError);
+    }
+  }, [authError]);
+
+  const validateForm = () => {
+    // 清除先前的錯誤
+    setLocalError('');
+    setError('');
+    
+    // 驗證表單欄位
+    const emailError = validateEmail(email);
+    if (emailError) {
+      setLocalError(emailError);
+      return false;
+    }
+    
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      setLocalError(passwordError);
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     
-    if (!email.trim()) {
-      setError('請輸入電子郵件');
+    if (!validateForm()) {
       return;
     }
     
-    if (!password) {
-      setError('請輸入密碼');
-      return;
-    }
-    
-    setError('');
     setLoading(true);
 
     try {
@@ -76,23 +98,8 @@ const Login = () => {
         navigate('/');
       }, 1000);
     } catch (error) {
+      // 錯誤已在AuthContext中處理，不需要在這裡再處理
       console.error('登入失敗:', error);
-      switch (error.code) {
-        case 'auth/invalid-email':
-          setError('無效的電子郵件格式');
-          break;
-        case 'auth/user-disabled':
-          setError('此帳號已被停用');
-          break;
-        case 'auth/user-not-found':
-          setError('找不到此帳號');
-          break;
-        case 'auth/wrong-password':
-          setError('密碼錯誤');
-          break;
-        default:
-          setError('登入失敗，請稍後再試');
-      }
     } finally {
       setLoading(false);
     }
@@ -104,6 +111,21 @@ const Login = () => {
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
+  };
+
+  // 當用戶開始輸入時清除錯誤
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'email') {
+      setEmail(value);
+    } else if (name === 'password') {
+      setPassword(value);
+    }
+    
+    if (localError || authError) {
+      setLocalError('');
+      setError('');
+    }
   };
 
   return (
@@ -118,35 +140,19 @@ const Login = () => {
           {notification.message}
         </Alert>
       </Snackbar>
-      <Box 
-        sx={{ 
-          mt: 8, 
-          display: 'flex', 
-          flexDirection: 'column', 
-          alignItems: 'center' 
-        }}
-      >
-
-        <Paper 
-          elevation={3} 
-          sx={{ 
-            p: 4, 
-            display: 'flex', 
-            flexDirection: 'column', 
-            alignItems: 'center',
-            width: '100%',
-            borderRadius: 2,
-            bgcolor: 'background.paper',
-            boxShadow: '0 3px 15px rgba(0,0,0,0.1)'
-          }}
-        >
-          <Typography component="h1" variant="h5" sx={{ mb: 3, fontWeight: 'bold', color: 'primary.main' }}>
+      <Box className="loginContainer">
+        <Paper className="loginPaper">
+          <Typography component="h1" variant="h5" className="loginTitle">
             帳號登入
           </Typography>
           
-          {error && <Alert severity="error" sx={{ width: '100%', mb: 2 }}>{error}</Alert>}
+          {(localError || authError) && (
+            <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+              {localError || authError}
+            </Alert>
+          )}
           
-          <Box component="form" onSubmit={handleLogin} noValidate sx={{ mt: 1, width: '100%' }}>
+          <Box component="form" onSubmit={handleLogin} noValidate className="loginForm">
             <TextField
               margin="normal"
               required
@@ -157,11 +163,8 @@ const Login = () => {
               autoComplete="email"
               autoFocus
               value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setError('');
-              }}
-              sx={{ mb: 2 }}
+              onChange={handleInputChange}
+              className="loginField"
             />
             <TextField
               margin="normal"
@@ -173,10 +176,7 @@ const Login = () => {
               id="password"
               autoComplete="current-password"
               value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setError('');
-              }}
+              onChange={handleInputChange}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -190,7 +190,7 @@ const Login = () => {
                   </InputAdornment>
                 ),
               }}
-              sx={{ mb: 3 }}
+              className="passwordField"
             />
             <Button
               type="submit"
@@ -198,42 +198,26 @@ const Login = () => {
               variant="contained"
               color="primary"
               disabled={loading}
-              sx={{ 
-                mt: 2, 
-                mb: 3, 
-                py: 1.2,
-                fontWeight: 'bold',
-                borderRadius: 2
-              }}
+              className="submitButton"
             >
               {loading ? <CircularProgress size={24} color="inherit" /> : '登入'}
             </Button>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <Button 
-                  component={Link} 
-                  to="/forgot-password" 
-                  variant="text" 
-                  size="small"
-                  fullWidth
-                  sx={{ textAlign: 'center' }}
-                >
-                  忘記密碼？
-                </Button>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Button 
-                  component={Link} 
-                  to="/register" 
-                  variant="outlined" 
-                  size="small"
-                  fullWidth
-                  sx={{ textAlign: 'center' }}
-                >
-                  立即註冊新帳號
-                </Button>
-              </Grid>
-            </Grid>
+            
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+              <Link to="/forgot-password" className="forgotPasswordLink">
+                忘記密碼？
+              </Link>
+              
+              <Button 
+                component={Link} 
+                to="/register" 
+                variant="outlined" 
+                size="small"
+                className="registerLink"
+              >
+                立即註冊新帳號
+              </Button>
+            </Box>
           </Box>
         </Paper>
       </Box>

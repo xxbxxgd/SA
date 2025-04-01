@@ -11,63 +11,59 @@ import {
 import FacebookIcon from '@mui/icons-material/Facebook';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import TwitterIcon from '@mui/icons-material/Twitter';
+import '../styles/layout/Footer.css';
 
 const Footer = () => {
   return (
     <Box 
       component="footer" 
-      sx={{ 
-        py: 4, 
-        px: 2, 
-        mt: 'auto',
-        backgroundColor: (theme) => theme.palette.grey[100]
-      }}
+      className="footer"
     >
       <Container maxWidth="lg">
         <Grid container spacing={4}>
           <Grid item xs={12} sm={4}>
-            <Typography variant="h6" color="text.primary" gutterBottom>
+            <Typography variant="h6" className="footerTitle">
               輔仁大學外宿生二手交易平台
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" className="footerDescription">
               為輔仁大學外宿生提供可靠、便捷的二手交易服務，
               讓閒置物品找到新主人，讓需求得到滿足。
             </Typography>
           </Grid>
           
           <Grid item xs={12} sm={4}>
-            <Typography variant="h6" color="text.primary" gutterBottom>
+            <Typography variant="h6" className="footerTitle">
               快速連結
             </Typography>
-            <Link href="/" color="inherit" display="block" sx={{ mb: 1 }}>
+            <Link href="/" className="footerLink">
               首頁
             </Link>
-            <Link href="/about" color="inherit" display="block" sx={{ mb: 1 }}>
+            <Link href="/about" className="footerLink">
               關於我們
             </Link>
-            <Link href="/terms" color="inherit" display="block" sx={{ mb: 1 }}>
+            <Link href="/terms" className="footerLink">
               使用條款
             </Link>
-            <Link href="/privacy" color="inherit" display="block">
+            <Link href="/privacy" className="footerLink">
               隱私政策
             </Link>
           </Grid>
           
           <Grid item xs={12} sm={4}>
-            <Typography variant="h6" color="text.primary" gutterBottom>
+            <Typography variant="h6" className="footerTitle">
               聯絡我們
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography variant="body2" className="footerDescription" sx={{ mb: 2 }}>
               電子郵件: contact@fjusecondhand.com
             </Typography>
-            <Box>
-              <IconButton aria-label="facebook">
+            <Box className="socialIcons">
+              <IconButton aria-label="facebook" className="socialIcon">
                 <FacebookIcon />
               </IconButton>
-              <IconButton aria-label="instagram">
+              <IconButton aria-label="instagram" className="socialIcon">
                 <InstagramIcon />
               </IconButton>
-              <IconButton aria-label="twitter">
+              <IconButton aria-label="twitter" className="socialIcon">
                 <TwitterIcon />
               </IconButton>
             </Box>
@@ -76,7 +72,7 @@ const Footer = () => {
         
         <Divider sx={{ my: 2 }} />
         
-        <Typography variant="body2" color="text.secondary" align="center">
+        <Typography variant="body2" className="copyright">
           {'© '}
           {new Date().getFullYear()}
           {' 輔仁大學外宿生二手交易平台. All rights reserved.'}
