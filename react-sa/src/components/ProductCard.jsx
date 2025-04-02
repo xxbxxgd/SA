@@ -224,7 +224,7 @@ const ProductCard = ({ product, isOwner = false }) => {
             onClick={handleDelete}
             sx={{ 
               bgcolor: 'rgba(255,255,255,0.8)',
-              '&:hover': { bgcolor: 'rgba(255,255,255,0.95)' }
+              '&:hover': { bgcolor: 'rgba(212, 206, 206, 0.95)' }
             }}
           >
             <DeleteIcon fontSize="small" />
