@@ -257,7 +257,7 @@ const ChatRoom = () => {
     <Container 
       maxWidth="lg" 
       sx={{ 
-        height: '100vh', 
+        height: '90vh', 
         display: 'flex', 
         flexDirection: 'column',
         p: 0,
@@ -428,7 +428,7 @@ const ChatRoom = () => {
           display: 'flex', 
           flexDirection: 'column',
           p: 0,
-          width: { xs: '100%', sm: 'auto' }
+          width: { xs: '100%', sm: '75%' }
         }}>
           {!roomId || !room ? (
             <Box sx={{ 
