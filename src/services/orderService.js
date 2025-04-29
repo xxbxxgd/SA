@@ -46,6 +46,7 @@ export const createOrder = async (orderData) => {
       ...orderData,
       buyerId: auth.currentUser.uid,
       buyerName: auth.currentUser.displayName || '未命名用戶',
+      sellerId: orderData.sellerId,
       status: 'pending', // pending, accepted, rejected, completed
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -102,6 +103,8 @@ export const getSellerOrders = (callback) => {
     }
 
     const currentUserId = auth.currentUser.uid;
+    console.log('當前用戶 UID:', currentUserId);
+    
     const ordersRef = collection(db, 'orders');
     const q = query(
       ordersRef,
@@ -109,11 +112,15 @@ export const getSellerOrders = (callback) => {
       orderBy('createdAt', 'desc')
     );
 
+    console.log('正在查詢賣家訂單，sellerId:', currentUserId);
+
     return onSnapshot(q, (snapshot) => {
       const orders = [];
       snapshot.forEach((doc) => {
         orders.push({ ...doc.data(), id: doc.id });
       });
+      console.log('找到賣家訂單數量:', orders.length);
+      console.log('訂單資料:', orders);
       callback(orders);
     }, (error) => {
       console.error('獲取訂單錯誤', error);
@@ -143,7 +150,7 @@ export const updateOrderStatus = async (orderId, status, rejectionReason = '') =
     const orderData = orderSnap.data();
     
     // 檢查是否有權限更新訂單
-    if (orderData.userId !== auth.currentUser.uid && orderData.buyerId !== auth.currentUser.uid) {
+    if (orderData.sellerId !== auth.currentUser.uid && orderData.buyerId !== auth.currentUser.uid) {
       throw new Error('沒有權限更新此訂單');
     }
 
