@@ -70,7 +70,7 @@ const OrderCard = ({ order, onUpdateStatus }) => {
     }
   };
 
-  const isSeller = currentUser.uid === order.userId;
+  const isSeller = currentUser.uid === order.sellerId;
 
   return (
     <Paper elevation={3} className="order-card">
@@ -97,7 +97,7 @@ const OrderCard = ({ order, onUpdateStatus }) => {
               <strong>買家:</strong> {order.buyerName}
             </Typography>
             <Typography variant="body1">
-              <strong>賣家:</strong> {order.userName}
+              <strong>賣家:</strong> {order.sellerName}
             </Typography>
             <Typography variant="body1">
               <strong>訂單狀態:</strong>
