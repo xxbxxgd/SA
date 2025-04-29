@@ -4,6 +4,7 @@ import { ThemeProvider, createTheme } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
+import { OrderProvider } from './contexts/OrderContext';
 
 // 組件
 import Navbar from './components/Navbar';
@@ -28,6 +29,7 @@ import ChatRoom from './pages/ChatRoom';
 import ChatRoomList from './pages/ChatRoomList';
 import ChatRoomPage from './pages/ChatRoomPage';
 import Profile from './pages/Profile';
+import Orders from './pages/Orders';
 
 // 創建主題
 const theme = createTheme({
@@ -105,6 +107,7 @@ const AppRouter = () => {
           <Route path="/chats" element={<ChatRoomList />} />
           <Route path="/chat-test" element={<ChatRoomPage />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/orders" element={<Orders />} />
         </Routes>
       </main>
       <Footer />
@@ -118,9 +121,11 @@ function App() {
       <CssBaseline />
       <AuthProvider>
         <CartProvider>
-          <Router>
-            <AppRouter />
-          </Router>
+          <OrderProvider>
+            <Router>
+              <AppRouter />
+            </Router>
+          </OrderProvider>
         </CartProvider>
       </AuthProvider>
     </ThemeProvider>

@@ -24,6 +24,7 @@ export function CartProvider({ children }) {
 
   // 添加商品到購物車
   const addToCart = (product) => {
+    console.log('addToCart product:', product);
     setCartItems(prevItems => {
       // 檢查商品是否已在購物車中
       const itemExists = prevItems.find(item => item.id === product.id);

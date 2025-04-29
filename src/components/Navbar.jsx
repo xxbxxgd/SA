@@ -181,6 +181,14 @@ const Navbar = () => {
               >
                 我的商品
               </Button>
+              <Button 
+                component={Link} 
+                to="/orders" 
+                color="inherit"
+                sx={{ mr: 2 }}
+              >
+                我的訂單
+              </Button>
               {/* 聊天圖標 */}
               <ChatIconComponent />
               {/* 購物車圖示 */}

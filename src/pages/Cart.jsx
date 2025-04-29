@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Container, Typography, Button, Grid, Paper, Box, IconButton, Divider, Snackbar, Alert } from '@mui/material';
 import { useCart } from '../contexts/CartContext';
-import { Link } from 'react-router-dom';
+import { useOrder } from '../contexts/OrderContext';
+import { useAuth } from '../contexts/AuthContext';
+import { Link, useNavigate } from 'react-router-dom';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -10,8 +12,12 @@ import '../styles/pages/Cart.css';
 
 const Cart = () => {
   const { cartItems, removeFromCart, updateQuantity, clearCart, getCartTotal } = useCart();
+  const { createNewOrder } = useOrder();
+  const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [orderSuccess, setOrderSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleQuantityChange = (productId, newQuantity) => {
     if (newQuantity <= 0) {
@@ -53,11 +59,69 @@ const Cart = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  const handleCheckout = (e) => {
+  const handleCheckout = async (e) => {
     e.preventDefault();
-    setOrderSuccess(true);
-    // 這裡可以加清空購物車等動作
-    // clearCart();
+    console.log('cartItems for checkout:', cartItems);
+    
+    if (!currentUser) {
+      setSnackbar({
+        open: true,
+        message: '請先登入後再結帳',
+        severity: 'error'
+      });
+      return;
+    }
+
+    if (cartItems.length === 0) {
+      setSnackbar({
+        open: true,
+        message: '購物車是空的',
+        severity: 'error'
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // 為每個商品創建訂單
+      for (const item of cartItems) {
+        const orderData = {
+          productId: item.id,
+          productName: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          sellerId: item.userId,
+          sellerName: item.userName,
+          imageUrl: item.imageUrl,
+        };
+
+        await createNewOrder(orderData);
+      }
+
+      // 清空購物車
+      clearCart();
+      
+      setOrderSuccess(true);
+      setSnackbar({
+        open: true,
+        message: '訂單已成功創建',
+        severity: 'success'
+      });
+
+      // 2秒後跳轉到訂單頁面
+      setTimeout(() => {
+        navigate('/orders');
+      }, 2000);
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: error.message || '創建訂單時發生錯誤',
+        severity: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   // 如果購物車是空的
@@ -213,9 +277,10 @@ const Cart = () => {
               size="large" 
               className="checkout-btn"
               onClick={handleCheckout}
+              disabled={loading}
               sx={{ mt: 2, fontWeight: 700, fontSize: '1.2rem', borderRadius: '10px' }}
             >
-              結帳
+              {loading ? '處理中...' : '結帳'}
             </Button>
           </Paper>
         </Grid>
@@ -240,7 +305,7 @@ const Cart = () => {
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
         <Alert onClose={() => setOrderSuccess(false)} severity="success" sx={{ width: '100%' }}>
-          下單成功！感謝您的購買
+          下單成功！正在跳轉到訂單頁面...
         </Alert>
       </Snackbar>
     </Container>
