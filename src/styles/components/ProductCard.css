@@ -24,6 +24,11 @@
   position: relative;
 }
 
+.cardActionArea.soldOut {
+  filter: grayscale(100%);
+  opacity: 0.8;
+}
+
 .productImage {
   height: 200px;
   object-fit: cover;
@@ -49,6 +54,18 @@
   font-weight: bold;
   color: white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.soldOutChip {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  background-color: #dc004e;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 1;
 }
 
 .productContent {

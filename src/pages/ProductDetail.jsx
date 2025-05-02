@@ -130,7 +130,6 @@ const ProductDetail = () => {
           <div className="productPrice">NT$ {product.price}</div>
           
           <div className="productTags">
-            {product.stock > 0 && <span className="stockTag">庫存: {product.stock}</span>}
             {product.category && <span className="categoryTag">{product.category}</span>}
           </div>
           

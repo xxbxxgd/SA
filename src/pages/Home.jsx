@@ -24,11 +24,13 @@ const Home = ({ currentCategory }) => {
           productQuery = query(
             collection(db, 'products'),
             where('category', '==', currentCategory),
+            where('stock', '>', 0),
             limit(12)
           );
         } else {
           productQuery = query(
             collection(db, 'products'),
+            where('stock', '>', 0),
             limit(12)
           );
         }
