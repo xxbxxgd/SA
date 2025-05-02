@@ -157,49 +157,20 @@ const ChatRoom = () => {
     };
   };
 
-  // 優化訊息監聽
+  // 監聽消息
   useEffect(() => {
-    let unsubscribe = () => {};
-    let isMounted = true;
+    if (!roomId || !currentUser) return;
     
-    if (currentUser && roomId) {
-      const debouncedSetMessages = debounce((newMessages) => {
-        if (!isMounted) return;
-        
-        setMessages(prevMessages => {
-          // 使用 Set 來追蹤已處理的消息 ID
-          const processedIds = new Set(prevMessages.map(msg => msg.id));
-          const newMessagesToAdd = newMessages.filter(msg => !processedIds.has(msg.id));
-          
-          if (newMessagesToAdd.length === 0) {
-            return prevMessages;
-          }
-          
-          // 合併並排序消息
-          const allMessages = [...prevMessages, ...newMessagesToAdd].sort((a, b) => {
-            const timeA = a.timestamp?.seconds || 0;
-            const timeB = b.timestamp?.seconds || 0;
-            return timeA - timeB;
-          });
-          
-          return allMessages;
-        });
-        
-        // 只在有新消息時更新 loading 狀態
-        if (newMessages.length > 0) {
-          setLoading(false);
-        }
-      }, 100); // 100ms 的防抖時間
-
-      unsubscribe = listenToMessages(roomId, (newMessages) => {
-        if (!isMounted) return;
-        debouncedSetMessages(newMessages);
-      });
-    }
+    setLoading(true);
+    const unsubscribe = listenToMessages(roomId, (newMessages) => {
+      setMessages(newMessages);
+      setLoading(false);
+    });
     
     return () => {
-      isMounted = false;
       unsubscribe();
+      setMessages([]);
+      setLoading(true);
     };
   }, [roomId, currentUser]);
   
@@ -302,8 +273,9 @@ const ChatRoom = () => {
       // 發送消息到服務器
       await sendMessage(roomId, messageToSend);
       
-      // 刷新頁面
-      window.location.reload();
+      // 重置消息列表狀態
+      setMessages([]);
+      setLoading(true);
       
     } catch (error) {
       console.error('發送消息錯誤', error);
@@ -325,8 +297,16 @@ const ChatRoom = () => {
   };
   
   // 處理聊天室點擊
-  const handleRoomClick = (roomId) => {
-    navigate(`/chat/${roomId}`);
+  const handleRoomClick = (newRoomId) => {
+    // 重置所有狀態
+    setMessages([]);
+    setLoading(true);
+    setRoom(null);
+    setOtherUserName('');
+    setOtherUserAvatar('');
+    
+    // 導航到新聊天室
+    navigate(`/chat/${newRoomId}`);
   };
   
   // 返回按鈕
