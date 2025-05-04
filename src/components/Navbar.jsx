@@ -141,14 +141,7 @@ const Navbar = () => {
           {/* 未登入顯示登入註冊，已登入顯示個人資料 */}
           {currentUser ? (
             <Box>
-              <Button 
-                component={Link} 
-                to="/my-products" 
-                color="inherit"
-                sx={{ mr: 2 }}
-              >
-                共用專區
-              </Button>
+
               <Button 
                 component={Link} 
                 to="/my-products" 
@@ -157,14 +150,7 @@ const Navbar = () => {
               >
                 贈送專區
               </Button>
-              <Button 
-                component={Link} 
-                to="/my-products" 
-                color="inherit"
-                sx={{ mr: 2 }}
-              >
-                交換專區
-              </Button>             
+           
               <Button 
                 component={Link} 
                 to="/add-product" 
@@ -300,4 +286,4 @@ const Navbar = () => {
   );
 };
 
-export default Navbar; 
+export default Navbar;

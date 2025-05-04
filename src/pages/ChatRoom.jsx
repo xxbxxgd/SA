@@ -302,7 +302,9 @@ const ChatRoom = () => {
       // 發送消息到服務器
       await sendMessage(roomId, messageToSend);
       
-      // 刷新頁面
+      // 重置消息狀態並重新加載
+      setMessages([]);
+      setLoading(true);
       window.location.reload();
       
     } catch (error) {
@@ -326,7 +328,14 @@ const ChatRoom = () => {
   
   // 處理聊天室點擊
   const handleRoomClick = (roomId) => {
+    // 重置消息狀態
+    setMessages([]);
+    setLoading(true);
+    setNewMessage('');
+    // 導航到新聊天室
     navigate(`/chat/${roomId}`);
+    // 強制重新渲染組件
+    window.location.reload();
   };
   
   // 返回按鈕
