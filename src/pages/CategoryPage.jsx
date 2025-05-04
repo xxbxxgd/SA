@@ -40,19 +40,25 @@ const CategoryPage = () => {
         const productQuery = query(
           collection(db, 'products'),
           where('category', '==', categoryId),
-          orderBy('createdAt', 'desc')
+          where('stock', '>', 0)
         );
         
         const querySnapshot = await getDocs(productQuery);
         const productsData = [];
         
         querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          
           productsData.push({
             id: doc.id,
-            ...data
+            ...doc.data()
           });
+        });
+        
+        // 在前端进行排序
+        productsData.sort((a, b) => {
+          if (a.createdAt && b.createdAt) {
+            return b.createdAt.seconds - a.createdAt.seconds;
+          }
+          return 0;
         });
         
         // 如果找不到商品，檢查所有商品的分類

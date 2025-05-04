@@ -34,7 +34,7 @@ const SearchResults = () => {
         // 獲取所有商品
         const productsQuery = query(
           collection(db, 'products'),
-          orderBy('createdAt', 'desc')
+          where('stock', '>', 0)
         );
         
         const querySnapshot = await getDocs(productsQuery);
@@ -45,6 +45,14 @@ const SearchResults = () => {
             id: doc.id,
             ...doc.data()
           });
+        });
+
+        // 在前端进行排序
+        productsData.sort((a, b) => {
+          if (a.createdAt && b.createdAt) {
+            return b.createdAt.seconds - a.createdAt.seconds;
+          }
+          return 0;
         });
         
         // 在本地過濾符合搜索條件的商品

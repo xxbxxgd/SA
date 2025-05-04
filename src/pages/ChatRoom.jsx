@@ -304,6 +304,7 @@ const ChatRoom = () => {
     setRoom(null);
     setOtherUserName('');
     setOtherUserAvatar('');
+    setNewMessage('');
     
     // 導航到新聊天室
     navigate(`/chat/${newRoomId}`);

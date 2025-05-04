@@ -123,7 +123,7 @@ const ProductCard = ({ product, onAddToCart }) => {
       <Card className="productCard">
         <CardActionArea 
           onClick={handleClick} 
-          className="cardActionArea"
+          className={`cardActionArea ${(!product.stock || product.stock < 1) ? 'soldOut' : ''}`}
         >
           {/* 商品圖片 */}
           <CardMedia
@@ -131,7 +131,7 @@ const ProductCard = ({ product, onAddToCart }) => {
             height="200"
             image={product.images && product.images.length > 0 ? product.images[0] : (product.imageUrl || 'https://via.placeholder.com/300x200?text=無圖片')}
             alt={product.name}
-            className="productImage"
+            className={`productImage ${(!product.stock || product.stock < 1) ? 'soldOut' : ''}`}
           />
           
           {/* 分類標籤，定位在圖片左上角 */}
@@ -143,15 +143,16 @@ const ProductCard = ({ product, onAddToCart }) => {
             className="categoryChip"
           />
           
-          {/* 庫存標籤，定位在圖片右下角 */}
-          <Chip 
-            icon={<InventoryIcon style={{ fontSize: '0.8rem', color: 'white' }} />}
-            label={`庫存: ${product.stock || 0}`}
-            size="small"
-            color={product.stock > 0 ? "success" : "error"}
-            variant="filled"
-            className="stockChip"
-          />
+          {/* 售完標籤 */}
+          {(!product.stock || product.stock < 1) && (
+            <Chip 
+              label="已售完" 
+              size="small" 
+              color="error" 
+              variant="filled"
+              className="soldOutChip"
+            />
+          )}
           
           <CardContent className="productContent">
             {/* 商品名稱 */}

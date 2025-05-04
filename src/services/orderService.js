@@ -9,7 +9,8 @@ import {
   getDoc, 
   setDoc, 
   updateDoc,
-  serverTimestamp
+  serverTimestamp,
+  increment
 } from 'firebase/firestore';
 import { db, auth } from '../firebase/config';
 
@@ -42,6 +43,20 @@ export const createOrder = async (orderData) => {
       throw new Error('用戶未登入');
     }
 
+    // 獲取商品信息並檢查庫存
+    const productRef = doc(db, 'products', orderData.productId);
+    const productSnap = await getDoc(productRef);
+    
+    if (!productSnap.exists()) {
+      throw new Error('商品不存在');
+    }
+
+    const product = productSnap.data();
+    if (product.stock < 1) {
+      throw new Error('商品庫存不足');
+    }
+
+    // 創建訂單
     const order = {
       ...orderData,
       buyerId: auth.currentUser.uid,
@@ -55,6 +70,12 @@ export const createOrder = async (orderData) => {
 
     const ordersRef = collection(db, 'orders');
     const docRef = await addDoc(ordersRef, order);
+
+    // 更新商品庫存
+    await updateDoc(productRef, {
+      stock: increment(-1)
+    });
+
     return { ...order, id: docRef.id };
   } catch (error) {
     return handleFirebaseError(error);
@@ -161,6 +182,14 @@ export const updateOrderStatus = async (orderId, status, rejectionReason = '') =
 
     if (rejectionReason) {
       updateData.rejectionReason = rejectionReason;
+    }
+
+    // 如果訂單被拒絕，將商品庫存加回1
+    if (status === 'rejected') {
+      const productRef = doc(db, 'products', orderData.productId);
+      await updateDoc(productRef, {
+        stock: increment(1)
+      });
     }
 
     await updateDoc(orderRef, updateData);

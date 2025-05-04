@@ -130,7 +130,6 @@ const ProductDetail = () => {
           <div className="productPrice">NT$ {product.price}</div>
           
           <div className="productTags">
-            {product.stock > 0 && <span className="stockTag">庫存: {product.stock}</span>}
             {product.category && <span className="categoryTag">{product.category}</span>}
           </div>
           
@@ -197,10 +196,7 @@ const ProductDetail = () => {
                 <th className="specLabel">宿舍位置</th>
                 <td className="specValue">{product.location || '無指定位置'}</td>
               </tr>
-              <tr className="specRow">
-                <th className="specLabel">庫存</th>
-                <td className="specValue">{product.stock}</td>
-              </tr>
+
               <tr className="specRow">
                 <th className="specLabel">上架日期</th>
                 <td className="specValue">
