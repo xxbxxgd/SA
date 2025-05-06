@@ -22,9 +22,11 @@ import PersonIcon from '@mui/icons-material/Person';
 import { useAuth } from '../contexts/AuthContext';
 import '../styles/components/ProductCard.css';
 
-const ProductCard = ({ product, isOwner = false }) => {
-  const navigate = useNavigate();
+const ProductCard = ({ product, onAddToCart }) => {
   const { currentUser } = useAuth();
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   
   const handleClick = () => {
@@ -44,6 +46,51 @@ const ProductCard = ({ product, isOwner = false }) => {
   const goToLogin = () => {
     setLoginDialogOpen(false);
     navigate('/login');
+  };
+  
+  const handleAddToCart = async () => {
+    if (!currentUser) {
+      setSnackbar({
+        open: true,
+        message: '請先登入後再購買',
+        severity: 'error'
+      });
+      return;
+    }
+
+    if (currentUser.uid === product.userId) {
+      setSnackbar({
+        open: true,
+        message: '不能購買自己的商品',
+        severity: 'error'
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // 獲取賣家資訊
+      // const sellerData = await getUserData(product.userId); // 如需查詢 Firestore 可保留
+      // 添加到購物車
+      onAddToCart({
+        ...product,
+        sellerId: product.userId,
+        sellerName: product.userName
+      });
+      setSnackbar({
+        open: true,
+        message: '已添加到購物車',
+        severity: 'success'
+      });
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: error.message || '添加到購物車失敗',
+        severity: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
   
   // 格式化時間戳
@@ -76,7 +123,7 @@ const ProductCard = ({ product, isOwner = false }) => {
       <Card className="productCard">
         <CardActionArea 
           onClick={handleClick} 
-          className="cardActionArea"
+          className={`cardActionArea ${(!product.stock || product.stock < 1) ? 'soldOut' : ''}`}
         >
           {/* 商品圖片 */}
           <CardMedia
@@ -84,7 +131,7 @@ const ProductCard = ({ product, isOwner = false }) => {
             height="200"
             image={product.images && product.images.length > 0 ? product.images[0] : (product.imageUrl || 'https://via.placeholder.com/300x200?text=無圖片')}
             alt={product.name}
-            className="productImage"
+            className={`productImage ${(!product.stock || product.stock < 1) ? 'soldOut' : ''}`}
           />
           
           {/* 分類標籤，定位在圖片左上角 */}
@@ -96,15 +143,16 @@ const ProductCard = ({ product, isOwner = false }) => {
             className="categoryChip"
           />
           
-          {/* 庫存標籤，定位在圖片右下角 */}
-          <Chip 
-            icon={<InventoryIcon style={{ fontSize: '0.8rem', color: 'white' }} />}
-            label={`庫存: ${product.stock || 0}`}
-            size="small"
-            color={product.stock > 0 ? "success" : "error"}
-            variant="filled"
-            className="stockChip"
-          />
+          {/* 售完標籤 */}
+          {(!product.stock || product.stock < 1) && (
+            <Chip 
+              label="已售完" 
+              size="small" 
+              color="error" 
+              variant="filled"
+              className="soldOutChip"
+            />
+          )}
           
           <CardContent className="productContent">
             {/* 商品名稱 */}

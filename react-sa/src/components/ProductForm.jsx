@@ -140,7 +140,7 @@ const ProductForm = ({
     e.preventDefault();
     
     try {
-      if (!name || !price || !category || !stock || !location) {
+      if (!name || !price || !category || !location) {
         throw new Error('請填寫所有必填欄位');
       }
       
@@ -157,13 +157,13 @@ const ProductForm = ({
       // 壓縮並獲取Base64圖片數據
       const imageBase64List = await convertImagesToBase64();
       
-      // 將表單數據傳給父組件
+      // 將表單數據傳給父組件，自動設置庫存為1
       onSubmit({
         name,
         description,
         price: Number(price),
         category,
-        stock: Number(stock),
+        stock: 1,
         location,
         images: imageBase64List
       });
@@ -245,14 +245,16 @@ const ProductForm = ({
       </Form.Group>
       
       <Form.Group className="mb-3">
-        <Form.Label>庫存數量 *</Form.Label>
+        <Form.Label>庫存數量</Form.Label>
         <Form.Control 
           type="number" 
-          value={stock} 
-          onChange={(e) => setStock(e.target.value)}
-          required 
+          value={1}
+          disabled
           min="0"
         />
+        <Form.Text className="text-muted">
+          商品庫存數量固定為1
+        </Form.Text>
       </Form.Group>
       
       {mode === 'edit' && originalImages.length > 0 && imageFiles.length === 0 && (

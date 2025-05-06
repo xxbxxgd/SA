@@ -6,7 +6,7 @@ import {
   IconButton, Badge, CircularProgress
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { getUserChatRooms } from '../services/chatService';
+import { getUserChatRooms, getUserData } from '../services/chatService';
 import { useAuth } from '../contexts/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
@@ -16,6 +16,7 @@ const ChatRoomList = () => {
 
   const [chatRooms, setChatRooms] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userAvatars, setUserAvatars] = useState({});
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
@@ -29,6 +30,24 @@ const ChatRoomList = () => {
         console.log('獲取到聊天室:', rooms.length);
         setChatRooms(rooms);
         setLoading(false);
+        
+        // 獲取每個聊天室對方的頭像
+        rooms.forEach(async (room) => {
+          const otherUserId = room.participants.find(id => id !== currentUser.uid);
+          if (otherUserId) {
+            try {
+              const userData = await getUserData(otherUserId);
+              if (userData && userData.photoURL) {
+                setUserAvatars(prev => ({
+                  ...prev,
+                  [otherUserId]: userData.photoURL
+                }));
+              }
+            } catch (error) {
+              console.error('獲取用戶頭像失敗:', error);
+            }
+          }
+        });
       });
     } else {
       // 未登入則導向登入頁
@@ -167,8 +186,8 @@ const ChatRoomList = () => {
                           horizontal: 'right',
                         }}
                       >
-                        <Avatar>
-                          {otherUserName.charAt(0).toUpperCase()}
+                        <Avatar src={userAvatars[room.participants.find(id => id !== currentUser.uid)]}>
+                          {!userAvatars[room.participants.find(id => id !== currentUser.uid)] && otherUserName.charAt(0).toUpperCase()}
                         </Avatar>
                       </Badge>
                     </ListItemAvatar>

@@ -27,6 +27,7 @@ const AddProduct = () => {
       // 直接將產品數據與圖片一起保存到Firestore
       const productData = {
         ...formData,
+        stock: 1, // 確保庫存始終為1
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         userId: currentUser.uid,

@@ -1,14 +1,128 @@
-import React from 'react';
-import { Container, Typography, Button, Grid, Paper, Box, IconButton, Divider } from '@mui/material';
+import React, { useState } from 'react';
+import { Container, Typography, Button, Grid, Paper, Box, IconButton, Divider, Snackbar, Alert } from '@mui/material';
 import { useCart } from '../contexts/CartContext';
-import { Link } from 'react-router-dom';
+import { useOrder } from '../contexts/OrderContext';
+import { useAuth } from '../contexts/AuthContext';
+import { Link, useNavigate } from 'react-router-dom';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import '../styles/pages/Cart.css';
 
 const Cart = () => {
   const { cartItems, removeFromCart, updateQuantity, clearCart, getCartTotal } = useCart();
+  const { createNewOrder } = useOrder();
+  const { currentUser } = useAuth();
+  const navigate = useNavigate();
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [orderSuccess, setOrderSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleQuantityChange = (productId, newQuantity) => {
+    if (newQuantity <= 0) {
+      removeFromCart(productId);
+      setSnackbar({
+        open: true,
+        message: '商品已從購物車移除',
+        severity: 'info'
+      });
+    } else {
+      updateQuantity(productId, newQuantity);
+      setSnackbar({
+        open: true,
+        message: '商品數量已更新',
+        severity: 'success'
+      });
+    }
+  };
+
+  const handleRemoveItem = (productId) => {
+    removeFromCart(productId);
+    setSnackbar({
+      open: true,
+      message: '商品已從購物車移除',
+      severity: 'info'
+    });
+  };
+
+  const handleClearCart = () => {
+    clearCart();
+    setSnackbar({
+      open: true,
+      message: '購物車已清空',
+      severity: 'info'
+    });
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
+  const handleCheckout = async (e) => {
+    e.preventDefault();
+    console.log('cartItems for checkout:', cartItems);
+    
+    if (!currentUser) {
+      setSnackbar({
+        open: true,
+        message: '請先登入後再結帳',
+        severity: 'error'
+      });
+      return;
+    }
+
+    if (cartItems.length === 0) {
+      setSnackbar({
+        open: true,
+        message: '購物車是空的',
+        severity: 'error'
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // 為每個商品創建訂單
+      for (const item of cartItems) {
+        const orderData = {
+          productId: item.id,
+          productName: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          sellerId: item.userId,
+          sellerName: item.userName,
+          imageUrl: item.imageUrl,
+        };
+
+        await createNewOrder(orderData);
+      }
+
+      // 清空購物車
+      clearCart();
+      
+      setOrderSuccess(true);
+      setSnackbar({
+        open: true,
+        message: '訂單已成功創建',
+        severity: 'success'
+      });
+
+      // 2秒後跳轉到訂單頁面
+      setTimeout(() => {
+        navigate('/orders');
+      }, 2000);
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: error.message || '創建訂單時發生錯誤',
+        severity: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // 如果購物車是空的
   if (cartItems.length === 0) {
@@ -18,8 +132,14 @@ const Cart = () => {
           購物車
         </Typography>
         <Paper elevation={3} className="empty-cart">
+          <Box sx={{ mb: 2 }}>
+            <img src="https://cdn-icons-png.flaticon.com/512/2038/2038854.png" alt="空購物車" style={{ width: 80, opacity: 0.7 }} />
+          </Box>
           <Typography variant="h6" align="center" className="empty-cart-text">
-            您的購物車是空的
+            您的購物車是空的，快去挑選喜歡的商品吧！
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            點擊下方「繼續購物」返回商品列表
           </Typography>
           <Button 
             component={Link} 
@@ -49,65 +169,63 @@ const Cart = () => {
               <Box key={item.id} className="cart-item">
                 <Grid container alignItems="center" spacing={2}>
                   {/* 商品圖片 */}
-                  <Grid item xs={2}>
-                    <img 
-                      src={item.imageUrl || 'https://via.placeholder.com/100'} 
-                      alt={item.name} 
-                      className="cart-item-image" 
-                    />
-                  </Grid>
-                  
-                  {/* 商品名稱 */}
-                  <Grid item xs={3}>
-                    <Typography variant="subtitle1" className="cart-item-name">
-                      {item.name}
-                    </Typography>
-                  </Grid>
-                  
-                  {/* 商品單價 */}
-                  <Grid item xs={2}>
-                    <Typography variant="body2" className="cart-item-price">
-                      ${item.price}
-                    </Typography>
-                  </Grid>
-                  
-                  {/* 數量控制 */}
-                  <Grid item xs={3}>
-                    <Box className="quantity-control">
-                      <IconButton 
-                        size="small" 
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="quantity-btn"
+                  <Grid item xs={12} sm={2}>
+                    {item.imageUrl ? (
+                      <img
+                        src={item.imageUrl}
+                        alt={item.name}
+                        className="cart-item-image"
+                        style={{ borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}
+                      />
+                    ) : (
+                      <Box
+                        sx={{
+                          width: 100,
+                          height: 100,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: '#f0f0f0',
+                          borderRadius: '12px',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.12)'
+                        }}
                       >
-                        <RemoveIcon />
-                      </IconButton>
-                      <Typography className="quantity">{item.quantity}</Typography>
-                      <IconButton 
-                        size="small" 
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="quantity-btn"
-                      >
-                        <AddIcon />
-                      </IconButton>
-                    </Box>
+                        <Typography variant="caption" color="text.secondary" align="center">
+                          無圖片
+                        </Typography>
+                      </Box>
+                    )}
                   </Grid>
                   
-                  {/* 小計 */}
-                  <Grid item xs={1}>
-                    <Typography variant="body2" className="cart-item-subtotal">
-                      ${item.price * item.quantity}
-                    </Typography>
-                  </Grid>
-                  
-                  {/* 刪除按鈕 */}
-                  <Grid item xs={1}>
-                    <IconButton 
-                      size="small" 
-                      onClick={() => removeFromCart(item.id)}
-                      className="delete-btn"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
+                  {/* 商品資訊 */}
+                  <Grid item xs={12} sm={10}>
+                    <Grid container alignItems="center" spacing={2}>
+                      {/* 商品名稱 */}
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="h6" className="cart-item-name" sx={{ fontWeight: 700, fontSize: '1.2rem' }}>
+                          {item.name}
+                        </Typography>
+                        <Typography variant="body1" className="cart-item-price" sx={{ color: '#1976d2', fontWeight: 600, fontSize: '1.1rem' }}>
+                          ${item.price}
+                        </Typography>
+                      </Grid>
+                      {/* 小計和刪除按鈕 */}
+                      <Grid item xs={12} sm={6}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <Typography variant="h6" className="cart-item-subtotal" sx={{ color: '#d32f2f', fontWeight: 700, fontSize: '1.2rem' }}>
+                            ${item.price}
+                          </Typography>
+                          <IconButton 
+                            size="large" 
+                            onClick={() => handleRemoveItem(item.id)}
+                            className="delete-btn"
+                            sx={{ color: '#d32f2f', background: '#fff3e0', ml: 2 }}
+                          >
+                            <DeleteIcon fontSize="medium" />
+                          </IconButton>
+                        </Box>
+                      </Grid>
+                    </Grid>
                   </Grid>
                 </Grid>
                 <Divider className="item-divider" />
@@ -120,8 +238,8 @@ const Cart = () => {
         <Grid item xs={12} className="cart-actions">
           <Button 
             variant="outlined" 
-            color="secondary" 
-            onClick={clearCart}
+            color="error" 
+            onClick={handleClearCart}
             className="clear-cart-btn"
           >
             清空購物車
@@ -142,12 +260,12 @@ const Cart = () => {
           <Paper elevation={3} className="cart-summary">
             <Grid container justifyContent="space-between" alignItems="center">
               <Grid item>
-                <Typography variant="h6" className="total-title">
-                  總計:
+                <Typography variant="h6" className="total-title" sx={{ fontWeight: 700, fontSize: '1.3rem' }}>
+                  總計：
                 </Typography>
               </Grid>
               <Grid item>
-                <Typography variant="h5" className="total-amount">
+                <Typography variant="h4" className="total-amount" sx={{ color: '#1976d2', fontWeight: 900, fontSize: '2rem' }}>
                   ${getCartTotal()}
                 </Typography>
               </Grid>
@@ -158,14 +276,38 @@ const Cart = () => {
               fullWidth 
               size="large" 
               className="checkout-btn"
-              component={Link}
-              to="/checkout"
+              onClick={handleCheckout}
+              disabled={loading}
+              sx={{ mt: 2, fontWeight: 700, fontSize: '1.2rem', borderRadius: '10px' }}
             >
-              結帳
+              {loading ? '處理中...' : '結帳'}
             </Button>
           </Paper>
         </Grid>
       </Grid>
+
+      {/* 通知訊息 */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+      {/* 下單成功訊息 */}
+      <Snackbar
+        open={orderSuccess}
+        autoHideDuration={2500}
+        onClose={() => setOrderSuccess(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setOrderSuccess(false)} severity="success" sx={{ width: '100%' }}>
+          下單成功！正在跳轉到訂單頁面...
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

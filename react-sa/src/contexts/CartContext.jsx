@@ -24,10 +24,12 @@ export function CartProvider({ children }) {
 
   // 添加商品到購物車
   const addToCart = (product) => {
+    console.log('addToCart product:', product);
     setCartItems(prevItems => {
       // 檢查商品是否已在購物車中
       const itemExists = prevItems.find(item => item.id === product.id);
-      
+      // 取得正確的圖片網址
+      const imageUrl = product.imageUrl || (product.images && product.images.length > 0 ? product.images[0] : '');
       if (itemExists) {
         // 如果已存在，增加數量
         return prevItems.map(item => 
@@ -36,8 +38,8 @@ export function CartProvider({ children }) {
             : item
         );
       } else {
-        // 如果不存在，添加新商品
-        return [...prevItems, { ...product, quantity: 1 }];
+        // 如果不存在，添加新商品，並帶入正確圖片網址
+        return [...prevItems, { ...product, imageUrl, quantity: 1 }];
       }
     });
   };
