@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Typography, Grid, Box, Button, CircularProgress, Alert } from '@mui/material';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import ProductCard from '../components/ProductCard';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,8 +11,9 @@ const MyProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const { currentUser } = useAuth();
+  const { currentUser, getUserData } = useAuth();
   const navigate = useNavigate();
+  const [userData, setUserData] = useState(null);
 
   useEffect(() => {
     // 確保用戶已登入
@@ -22,10 +23,21 @@ const MyProducts = () => {
       return;
     }
 
+    const fetchUserData = async () => {
+      try {
+        const userDataResult = await getUserData(currentUser.uid);
+        if (userDataResult) {
+          setUserData(userDataResult);
+        }
+      } catch (error) {
+        console.error('獲取用戶數據失敗:', error);
+      }
+    };
+
     const fetchUserProducts = async () => {
       setLoading(true);
       try {
-        // 建立查詢：獲取當前用戶上架的商品，移除orderBy
+        // 建立查詢：獲取當前用戶上架的商品
         console.log('正在查詢用戶商品：', currentUser.uid);
         
         const productQuery = query(
@@ -36,11 +48,15 @@ const MyProducts = () => {
         const querySnapshot = await getDocs(productQuery);
         const productsData = [];
         
+        // 處理查詢結果
         querySnapshot.forEach((doc) => {
-          productsData.push({
+          const productData = {
             id: doc.id,
-            ...doc.data()
-          });
+            ...doc.data(),
+            // 因為這是用戶自己的商品，直接使用用戶的交易時間設定
+            sellerAvailableTimes: userData?.availableTimes || null
+          };
+          productsData.push(productData);
         });
         
         // 在前端進行排序
@@ -66,8 +82,10 @@ const MyProducts = () => {
       }
     };
 
-    fetchUserProducts();
-  }, [currentUser]);
+    fetchUserData().then(() => {
+      fetchUserProducts();
+    });
+  }, [currentUser, getUserData]);
 
   // 如果用戶未登入，顯示提示
   if (!currentUser && !loading) {

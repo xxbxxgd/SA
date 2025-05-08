@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Typography, Grid, Box, CircularProgress, Alert } from '@mui/material';
-import { collection, getDocs, query, orderBy, where, limit } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, where, limit, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import ProductCard from '../components/ProductCard';
 import { useParams } from 'react-router-dom';
@@ -15,28 +15,13 @@ const CategoryPage = () => {
   const { currentUser } = useAuth();
 
   useEffect(() => {
-    const fetchCategoryProducts = async () => {
+    const fetchProducts = async () => {
+      if (!categoryId) return;
+      
       setLoading(true);
       setError('');
       
       try {
-        // 首先檢查是否可以獲取任何商品（測試基本連接）
-        try {
-          const testQuery = query(
-            collection(db, 'products'),
-            limit(1)
-          );
-          
-          const testSnapshot = await getDocs(testQuery);
-          
-          if (testSnapshot.size > 0) {
-            const testDoc = testSnapshot.docs[0];
-          }
-        } catch (testError) {
-          throw new Error(`無法連接到資料庫: ${testError.message}`);
-        }
-        
-        // 建立查詢：從指定分類中獲取商品
         const productQuery = query(
           collection(db, 'products'),
           where('category', '==', categoryId),
@@ -46,14 +31,32 @@ const CategoryPage = () => {
         const querySnapshot = await getDocs(productQuery);
         const productsData = [];
         
-        querySnapshot.forEach((doc) => {
-          productsData.push({
-            id: doc.id,
-            ...doc.data()
-          });
-        });
+        // 獲取所有商品
+        for (const docSnapshot of querySnapshot.docs) {
+          const productData = {
+            id: docSnapshot.id,
+            ...docSnapshot.data()
+          };
+          
+          // 獲取賣家資訊
+          if (productData.userId) {
+            try {
+              const sellerRef = doc(db, 'users', productData.userId);
+              const sellerSnap = await getDoc(sellerRef);
+              if (sellerSnap.exists()) {
+                const sellerData = sellerSnap.data();
+                // 將賣家的交易時間添加到商品資訊中
+                productData.sellerAvailableTimes = sellerData.availableTimes || null;
+              }
+            } catch (error) {
+              console.error('獲取賣家資訊錯誤:', error);
+            }
+          }
+          
+          productsData.push(productData);
+        }
         
-        // 在前端进行排序
+        // 在前端進行按創建時間排序
         productsData.sort((a, b) => {
           if (a.createdAt && b.createdAt) {
             return b.createdAt.seconds - a.createdAt.seconds;
@@ -61,28 +64,16 @@ const CategoryPage = () => {
           return 0;
         });
         
-        // 如果找不到商品，檢查所有商品的分類
-        if (productsData.length === 0) {
-          const allProductsQuery = query(
-            collection(db, 'products'),
-            orderBy('createdAt', 'desc'),
-            limit(10) // 限制返回數量以免資料過多
-          );
-          
-          const allSnapshot = await getDocs(allProductsQuery);
-        }
-        
         setProducts(productsData);
       } catch (error) {
-        setError(`無法載入商品: ${error.message}`);
+        console.error('獲取商品失敗:', error);
+        setError('無法載入商品，請稍後再試');
       } finally {
         setLoading(false);
       }
     };
 
-    if (categoryId) {
-      fetchCategoryProducts();
-    }
+    fetchProducts();
   }, [categoryId]);
 
   return (

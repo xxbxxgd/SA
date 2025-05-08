@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Typography, Grid, Box, CircularProgress, Alert } from '@mui/material';
-import { collection, getDocs, query, limit, where } from 'firebase/firestore';
+import { collection, getDocs, query, limit, where, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import ProductCard from '../components/ProductCard';
 import SearchBar from '../components/SearchBar';
@@ -38,12 +38,30 @@ const Home = ({ currentCategory }) => {
         const querySnapshot = await getDocs(productQuery);
         const productsData = [];
         
-        querySnapshot.forEach((doc) => {
-          productsData.push({
-            id: doc.id,
-            ...doc.data()
-          });
-        });
+        // 獲取所有商品
+        for (const docSnapshot of querySnapshot.docs) {
+          const productData = {
+            id: docSnapshot.id,
+            ...docSnapshot.data()
+          };
+          
+          // 獲取賣家資訊
+          if (productData.userId) {
+            try {
+              const sellerRef = doc(db, 'users', productData.userId);
+              const sellerSnap = await getDoc(sellerRef);
+              if (sellerSnap.exists()) {
+                const sellerData = sellerSnap.data();
+                // 將賣家的交易時間添加到商品資訊中
+                productData.sellerAvailableTimes = sellerData.availableTimes || null;
+              }
+            } catch (error) {
+              console.error('獲取賣家資訊錯誤:', error);
+            }
+          }
+          
+          productsData.push(productData);
+        }
         
         // 在前端進行按創建時間排序
         productsData.sort((a, b) => {

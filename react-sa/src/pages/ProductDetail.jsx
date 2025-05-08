@@ -6,6 +6,7 @@ import { db } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import StartChatButton from '../components/StartChatButton';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import '../styles/pages/Product.css';
 
 const ProductDetail = () => {
@@ -57,13 +58,39 @@ const ProductDetail = () => {
   const handleAddToCart = () => {
     if (product) {
       addToCart(product);
-      setSuccessMessage('商品已成功加入購物車！');
+
       
       // 3秒後清除成功訊息
       setTimeout(() => {
         setSuccessMessage('');
       }, 3000);
     }
+  };
+
+  // 格式化交易時間顯示
+  const formatAvailableTimes = (availableTimes) => {
+    console.log('產品詳情頁格式化交易時間:', availableTimes);
+    
+    if (!availableTimes) return '無指定時間';
+    
+    const orderedDays = [
+      { key: 'monday', label: '週一' },
+      { key: 'tuesday', label: '週二' },
+      { key: 'wednesday', label: '週三' },
+      { key: 'thursday', label: '週四' },
+      { key: 'friday', label: '週五' },
+      { key: 'saturday', label: '週六' },
+      { key: 'sunday', label: '週日' }
+    ];
+    
+    // 過濾出已選擇的日期，按固定順序
+    const selectedDays = orderedDays
+      .filter(day => availableTimes[day.key] === true)
+      .map(day => day.label);
+    
+    console.log('詳情頁選擇的日期:', selectedDays);
+    
+    return selectedDays.length > 0 ? selectedDays.join('、') : '無指定時間';
   };
 
   if (loading) {
@@ -211,6 +238,16 @@ const ProductDetail = () => {
               <tr className="specRow">
                 <th className="specLabel">賣家</th>
                 <td className="specValue">{sellerData?.displayName || '未知'}</td>
+              </tr>
+              
+              <tr className="specRow">
+                <th className="specLabel">
+                  <AccessTimeIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                  方便交易時間
+                </th>
+                <td className="specValue">
+                  {sellerData?.availableTimes ? formatAvailableTimes(sellerData.availableTimes) : '無指定時間'}
+                </td>
               </tr>
             </tbody>
           </table>

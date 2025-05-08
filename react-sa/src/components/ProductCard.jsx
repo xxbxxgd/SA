@@ -13,12 +13,14 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  DialogContentText
+  DialogContentText,
+  Tooltip
 } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PersonIcon from '@mui/icons-material/Person';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { useAuth } from '../contexts/AuthContext';
 import '../styles/components/ProductCard.css';
 
@@ -118,6 +120,32 @@ const ProductCard = ({ product, onAddToCart }) => {
     }
   };
   
+  // 格式化交易時間顯示
+  const formatAvailableTimes = (availableTimes) => {
+    console.log('格式化交易時間:', availableTimes);
+    
+    if (!availableTimes) return '無指定時間';
+    
+    const orderedDays = [
+      { key: 'monday', label: '週一' },
+      { key: 'tuesday', label: '週二' },
+      { key: 'wednesday', label: '週三' },
+      { key: 'thursday', label: '週四' },
+      { key: 'friday', label: '週五' },
+      { key: 'saturday', label: '週六' },
+      { key: 'sunday', label: '週日' }
+    ];
+    
+    // 過濾出已選擇的日期，按固定順序
+    const selectedDays = orderedDays
+      .filter(day => availableTimes[day.key] === true)
+      .map(day => day.label);
+    
+    console.log('選擇的日期:', selectedDays);
+    
+    return selectedDays.length > 0 ? selectedDays.join('、') : '無指定時間';
+  };
+  
   return (
     <>
       <Card className="productCard">
@@ -196,6 +224,15 @@ const ProductCard = ({ product, onAddToCart }) => {
                 <CalendarTodayIcon fontSize="small" color="action" sx={{ mr: 0.5, fontSize: '0.9rem' }} />
                 <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
                   {product.createdAt ? formatDate(product.createdAt) : ''}
+                </Typography>
+              </Box>
+              
+              {/* 交易時間 */}
+              <Box className="productTime">
+                <AccessTimeIcon fontSize="small" color="action" sx={{ mr: 0.5, fontSize: '0.9rem' }} />
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                  {console.log('商品交易時間:', product.sellerAvailableTimes)}
+                  {formatAvailableTimes(product.sellerAvailableTimes)}
                 </Typography>
               </Box>
             </Box>

@@ -13,7 +13,10 @@ import {
   Avatar,
   CircularProgress,
   Snackbar,
-  IconButton
+  IconButton,
+  FormGroup,
+  FormControlLabel,
+  Checkbox
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -26,6 +29,15 @@ const Profile = () => {
     displayName: '',
     phoneNumber: '',
     photoURL: '',
+    availableTimes: {
+      monday: false,
+      tuesday: false,
+      wednesday: false,
+      thursday: false,
+      friday: false,
+      saturday: false,
+      sunday: false
+    }
   });
   const [avatarPreview, setAvatarPreview] = useState('');
   const [avatarFile, setAvatarFile] = useState(null);
@@ -55,6 +67,15 @@ const Profile = () => {
             displayName: userData.displayName || '',
             phoneNumber: userData.phoneNumber || '',
             photoURL: userData.photoURL || '',
+            availableTimes: userData.availableTimes || {
+              monday: false,
+              tuesday: false,
+              wednesday: false,
+              thursday: false,
+              friday: false,
+              saturday: false,
+              sunday: false
+            }
           });
           setAvatarPreview(userData.photoURL || '');
         }
@@ -199,14 +220,8 @@ const Profile = () => {
       return false;
     }
     
-    // 驗證電話號碼
-    if (!formData.phoneNumber) {
-      setLocalError('請輸入連絡電話');
-      return false;
-    }
-    
-    // 驗證電話號碼格式 (必須是10位數字)
-    if (!/^\d{10}$/.test(formData.phoneNumber)) {
+    // 驗證電話號碼（如果已輸入）
+    if (formData.phoneNumber && !/^\d{10}$/.test(formData.phoneNumber)) {
       setLocalError('連絡電話必須是10位數字');
       return false;
     }
@@ -236,6 +251,7 @@ const Profile = () => {
         displayName: formData.displayName,
         phoneNumber: formData.phoneNumber,
         photoURL: photoURL,
+        availableTimes: formData.availableTimes
       });
       
       // 更新表單資料的 photoURL
@@ -267,6 +283,17 @@ const Profile = () => {
   // 關閉通知
   const handleCloseNotification = () => {
     setNotification({ ...notification, open: false });
+  };
+
+  // 處理交易時間變更
+  const handleTimeChange = (day) => {
+    setFormData({
+      ...formData,
+      availableTimes: {
+        ...formData.availableTimes,
+        [day]: !formData.availableTimes[day]
+      }
+    });
   };
 
   // 如果正在載入，顯示載入中
@@ -355,9 +382,95 @@ const Profile = () => {
               </Grid>
               
               <Grid item xs={12}>
+                <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
+                  方便交易時間
+                </Typography>
+                <FormGroup row>
+                  <Grid container spacing={1}>
+                    <Grid item xs={6}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={formData.availableTimes.monday}
+                            onChange={() => handleTimeChange('monday')}
+                          />
+                        }
+                        label="週一"
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={formData.availableTimes.tuesday}
+                            onChange={() => handleTimeChange('tuesday')}
+                          />
+                        }
+                        label="週二"
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={formData.availableTimes.wednesday}
+                            onChange={() => handleTimeChange('wednesday')}
+                          />
+                        }
+                        label="週三"
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={formData.availableTimes.thursday}
+                            onChange={() => handleTimeChange('thursday')}
+                          />
+                        }
+                        label="週四"
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={formData.availableTimes.friday}
+                            onChange={() => handleTimeChange('friday')}
+                          />
+                        }
+                        label="週五"
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={formData.availableTimes.saturday}
+                            onChange={() => handleTimeChange('saturday')}
+                          />
+                        }
+                        label="週六"
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={formData.availableTimes.sunday}
+                            onChange={() => handleTimeChange('sunday')}
+                          />
+                        }
+                        label="週日"
+                      />
+                    </Grid>
+                  </Grid>
+                </FormGroup>
+              </Grid>
+              
+              <Grid item xs={12}>
                 <TextField
                   margin="normal"
-                  required
                   fullWidth
                   id="phoneNumber"
                   label="連絡電話"
@@ -371,8 +484,8 @@ const Profile = () => {
                     pattern: '[0-9]*',
                     maxLength: 10,
                   }}
-                  placeholder="請輸入10位數電話號碼"
-                  helperText={`${formData.phoneNumber.length}/10 位數字`}
+                  placeholder="請輸入10位數電話號碼（選填）"
+                  helperText={formData.phoneNumber ? `${formData.phoneNumber.length}/10 位數字` : '選填'}
                   error={formData.phoneNumber.length > 0 && formData.phoneNumber.length !== 10}
                 />
               </Grid>

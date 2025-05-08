@@ -285,9 +285,6 @@ const ProductForm = ({
           onChange={handleImageChange}
           accept="image/*"
         />
-        <Form.Text className="text-muted">
-          最多可上傳5張圖片，每張不超過2MB
-        </Form.Text>
       </Form.Group>
       
       {images.length > 0 && (

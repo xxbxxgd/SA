@@ -79,6 +79,12 @@ const Register = () => {
     }
     
     // 驗證電子郵件
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@m365\.fju\.edu\.tw$/;
+    if (!emailRegex.test(formData.email)) {
+      setLocalError('請使用學校的電子郵件地址(____@m365.fju.edu.tw)');
+      return false;
+    }
+
     const emailError = validateEmail(formData.email);
     if (emailError) {
       setLocalError(emailError);

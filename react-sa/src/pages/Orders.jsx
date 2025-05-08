@@ -69,8 +69,9 @@ const OrderCard = ({ order, onUpdateStatus }) => {
         return '未知狀態';
     }
   };
-
-  const isSeller = currentUser.uid === order.sellerId;
+  
+  if (!order) return null;
+  const isSeller = currentUser && currentUser.uid === order.sellerId;
 
   return (
     <Paper elevation={3} className="order-card">
@@ -87,9 +88,6 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             </Typography>
             <Typography variant="body1">
               <strong>價格:</strong> ${order.price}
-            </Typography>
-            <Typography variant="body1">
-              <strong>數量:</strong> {order.quantity}
             </Typography>
           </Grid>
           <Grid item xs={12} sm={6}>
