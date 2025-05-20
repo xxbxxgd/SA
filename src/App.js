@@ -30,6 +30,7 @@ import ChatRoomList from './pages/ChatRoomList';
 import ChatRoomPage from './pages/ChatRoomPage';
 import Profile from './pages/Profile';
 import Orders from './pages/Orders';
+import Giveaway from './pages/Giveaway';
 
 // 創建主題
 const theme = createTheme({
@@ -108,6 +109,8 @@ const AppRouter = () => {
           <Route path="/chat-test" element={<ChatRoomPage />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/orders" element={<Orders />} />
+          <Route path="/giveaway" element={<Giveaway />} />
+          <Route path="/giveaway/:category" element={<Giveaway />} />
         </Routes>
       </main>
       <Footer />

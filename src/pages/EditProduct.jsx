@@ -86,6 +86,9 @@ const EditProduct = () => {
       // 更新產品數據
       const updatedData = {
         ...formData,
+        userId: currentUser.uid,
+        userEmail: currentUser.email,
+        userName: currentUser.displayName || '未知用戶',
         updatedAt: serverTimestamp()
       };
       

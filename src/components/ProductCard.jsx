@@ -171,6 +171,18 @@ const ProductCard = ({ product, onAddToCart }) => {
             className="categoryChip"
           />
           
+          {/* 贈送商品標籤 */}
+          {product.isGiveaway && (
+            <Chip 
+              label="免費贈送" 
+              size="small" 
+              color="success" 
+              variant="filled"
+              className="giveawayChip"
+              style={{ position: 'absolute', top: '8px', right: '8px' }}
+            />
+          )}
+          
           {/* 售完標籤 */}
           {(!product.stock || product.stock < 1) && (
             <Chip 
@@ -198,7 +210,7 @@ const ProductCard = ({ product, onAddToCart }) => {
               color="error" 
               className="productPrice"
             >
-              NT$ {product.price.toLocaleString()}
+            {product.isGiveaway ? '免費贈送' : `NT$ ${Math.round(product.price).toLocaleString()}`}
             </Typography>
             
             {/* 狀況 */}
