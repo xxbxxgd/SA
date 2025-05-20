@@ -92,7 +92,7 @@ const OrderCard = ({ order, onUpdateStatus }) => {
               </Typography>
             )}
             <Typography variant="body1">
-              <strong>價格:</strong> ${order.price}
+              <strong>價格:</strong> {order.price > 0 ? `$${order.price}` : '免費'}
             </Typography>
           </Grid>
           <Grid item xs={12} sm={6}>

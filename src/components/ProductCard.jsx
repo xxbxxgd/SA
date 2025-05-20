@@ -186,7 +186,7 @@ const ProductCard = ({ product, onAddToCart }) => {
           {/* 售完標籤 */}
           {(!product.stock || product.stock < 1) && (
             <Chip 
-              label="已售完" 
+              label={product.isGiveaway ? "已贈送" : "已售完"} 
               size="small" 
               color="error" 
               variant="filled"
@@ -210,7 +210,7 @@ const ProductCard = ({ product, onAddToCart }) => {
               color="error" 
               className="productPrice"
             >
-            {product.isGiveaway ? '免費贈送' : `NT$ ${Math.round(product.price).toLocaleString()}`}
+              {product.isGiveaway ? '免費贈送' : `NT$ ${Math.round(product.price).toLocaleString()}`}
             </Typography>
             
             {/* 狀況 */}

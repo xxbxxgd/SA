@@ -278,14 +278,14 @@ const Cart = () => {
                           {item.name}
                         </Typography>
                         <Typography variant="body1" className="cart-item-price" sx={{ color: '#1976d2', fontWeight: 600, fontSize: '1.1rem' }}>
-                          ${item.price}
+                          {item.isGiveaway ? '免費領取' : `$${item.price}`}
                         </Typography>
                       </Grid>
                       {/* 小計和刪除按鈕 */}
                       <Grid item xs={12} sm={6}>
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <Typography variant="h6" className="cart-item-subtotal" sx={{ color: '#d32f2f', fontWeight: 700, fontSize: '1.2rem' }}>
-                            ${item.price}
+                            {item.isGiveaway ? '免費' : `$${item.price}`}
                           </Typography>
                           <IconButton 
                             size="large" 
@@ -338,7 +338,7 @@ const Cart = () => {
               </Grid>
               <Grid item>
                 <Typography variant="h4" className="total-amount" sx={{ color: '#1976d2', fontWeight: 900, fontSize: '2rem' }}>
-                  ${getCartTotal()}
+                  {getCartTotal() > 0 ? `$${getCartTotal()}` : '免費'}
                 </Typography>
               </Grid>
             </Grid>
