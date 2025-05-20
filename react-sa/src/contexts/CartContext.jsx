@@ -95,7 +95,11 @@ export function CartProvider({ children }) {
 
   // 計算購物車總價
   const getCartTotal = () => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    return cartItems.reduce((total, item) => {
+      // 如果是贈送商品，不計入總價
+      if (item.isGiveaway) return total;
+      return total + (item.price * item.quantity);
+    }, 0);
   };
 
   const value = {

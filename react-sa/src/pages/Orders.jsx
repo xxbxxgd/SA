@@ -86,8 +86,13 @@ const OrderCard = ({ order, onUpdateStatus }) => {
             <Typography variant="body1">
               <strong>商品名稱:</strong> {order.productName}
             </Typography>
+            {order.date && order.time && (
+              <Typography variant="body1">
+                <strong>交易時間:</strong> {order.date} {order.time}
+              </Typography>
+            )}
             <Typography variant="body1">
-              <strong>價格:</strong> ${order.price}
+              <strong>價格:</strong> {order.price > 0 ? `$${order.price}` : '免費'}
             </Typography>
           </Grid>
           <Grid item xs={12} sm={6}>

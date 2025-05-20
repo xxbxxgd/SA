@@ -144,7 +144,7 @@ const Navbar = () => {
 
               <Button 
                 component={Link} 
-                to="/my-products" 
+                to="/giveaway" 
                 color="inherit"
                 sx={{ mr: 2 }}
               >

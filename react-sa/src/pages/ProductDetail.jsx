@@ -154,10 +154,13 @@ const ProductDetail = () => {
         <Col md={6} className="productDetails">
           <h2 className="productTitle">{product.name}</h2>
           
-          <div className="productPrice">NT$ {product.price}</div>
+          <div className="productPrice">
+            {product.isGiveaway ? '免費贈送' : `NT$ ${product.price}`}
+          </div>
           
           <div className="productTags">
             {product.category && <span className="categoryTag">{product.category}</span>}
+            {product.isGiveaway && <span className="giveawayTag">免費贈送</span>}
           </div>
           
           <div className="productDescription">

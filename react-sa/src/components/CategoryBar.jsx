@@ -87,7 +87,10 @@ const CategoryBar = ({ currentCategory }) => {
             return (
               <Button
                 component={Link}
-                to={category.path}
+                to={    
+                  location.pathname.startsWith('/giveaway')
+                  ? (category.id === 'all' ? '/giveaway' : `/giveaway/${category.id}`)
+                  : category.path}
                 key={category.id}
                 sx={{ 
                   mx: 1, 

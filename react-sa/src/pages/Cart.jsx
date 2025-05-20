@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Container, Typography, Button, Grid, Paper, Box, IconButton, Divider, Snackbar, Alert } from '@mui/material';
+import { Container, Typography, Button, Grid, Paper, Box, IconButton, Divider, Snackbar, Alert, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem } from '@mui/material';
 import { useCart } from '../contexts/CartContext';
 import { useOrder } from '../contexts/OrderContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,6 +9,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import '../styles/pages/Cart.css';
+import dayjs from 'dayjs';
 
 const Cart = () => {
   const { cartItems, removeFromCart, updateQuantity, clearCart, getCartTotal } = useCart();
@@ -18,6 +19,44 @@ const Cart = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [openTimeDialog, setOpenTimeDialog] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(dayjs());
+  const [selectedTime, setSelectedTime] = useState('12:00');
+  const [confirmDialog, setConfirmDialog] = useState(false);
+  const [amPm, setAmPm] = useState('pm');
+  const [hour, setHour] = useState('08');
+  const [minute, setMinute] = useState('');
+
+  const getHourOptions = () => {
+    return amPm === 'am'
+      ? Array.from({ length: 12 }, (_, i) => String(i).padStart(2, '0')) // 00~11
+      : Array.from({ length: 11 }, (_, i) => String(i + 12).padStart(2, '0')); // 12~22
+  };
+  const getMinuteOptions = () => Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
+
+  const getFilteredHourOptions = () => {
+    const now = dayjs();
+    const isToday = selectedDate.isSame(now, 'day');
+    let hours = getHourOptions();
+    if (!isToday) return hours;
+    // 如果是上午且現在已經超過11點，上午全部不能選
+    if (amPm === 'am' && now.hour() >= 12) return [];
+    // 如果是下午且現在已經超過22點，下午全部不能選
+    if (amPm === 'pm' && now.hour() >= 22) return [];
+    // 過濾掉已過的hour
+    return hours.filter(h => Number(h) > now.hour() || (Number(h) === now.hour() && now.minute() < 59));
+  };
+  const getFilteredMinuteOptions = () => {
+    const now = dayjs();
+    const isToday = selectedDate.isSame(now, 'day');
+    const selectedHour = Number(hour);
+    if (!isToday) return getMinuteOptions();
+    if (selectedHour > now.hour()) return getMinuteOptions();
+    if (selectedHour === now.hour()) {
+      return getMinuteOptions().filter(m => Number(m) > now.minute());
+    }
+    return getMinuteOptions();
+  };
 
   const handleQuantityChange = (productId, newQuantity) => {
     if (newQuantity <= 0) {
@@ -59,8 +98,39 @@ const Cart = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  const handleCheckout = async (e) => {
-    e.preventDefault();
+  const handleContinue = () => {
+    setOpenTimeDialog(true);
+  };
+
+  const handleTimeDialogClose = () => {
+    setOpenTimeDialog(false);
+  };
+
+  const handleConfirmCheckout = () => {
+    setConfirmDialog(true);
+  };
+
+  const handleConfirmDialogClose = () => {
+    setConfirmDialog(false);
+  };
+
+  const handleDateChange = (e) => {
+    setSelectedDate(dayjs(e.target.value));
+  };
+
+  const handleTimeChange = (e) => {
+    setSelectedTime(e.target.value);
+  };
+
+  const handleFinalCheckout = async () => {
+    setConfirmDialog(false);
+    setOpenTimeDialog(false);
+    // 將日期和時間傳給訂單
+    await handleCheckout(null, { date: selectedDate.format('YYYY-MM-DD'), time: `${hour}:${minute}` });
+  };
+
+  const handleCheckout = async (e, customData) => {
+    if (e && e.preventDefault) e.preventDefault();
     console.log('cartItems for checkout:', cartItems);
     
     if (!currentUser) {
@@ -94,6 +164,8 @@ const Cart = () => {
           sellerId: item.userId,
           sellerName: item.userName,
           imageUrl: item.imageUrl,
+          // 新增交易時間資訊
+          ...customData
         };
 
         await createNewOrder(orderData);
@@ -206,14 +278,14 @@ const Cart = () => {
                           {item.name}
                         </Typography>
                         <Typography variant="body1" className="cart-item-price" sx={{ color: '#1976d2', fontWeight: 600, fontSize: '1.1rem' }}>
-                          ${item.price}
+                          {item.isGiveaway ? '免費領取' : `$${item.price}`}
                         </Typography>
                       </Grid>
                       {/* 小計和刪除按鈕 */}
                       <Grid item xs={12} sm={6}>
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <Typography variant="h6" className="cart-item-subtotal" sx={{ color: '#d32f2f', fontWeight: 700, fontSize: '1.2rem' }}>
-                            ${item.price}
+                            {item.isGiveaway ? '免費' : `$${item.price}`}
                           </Typography>
                           <IconButton 
                             size="large" 
@@ -266,7 +338,7 @@ const Cart = () => {
               </Grid>
               <Grid item>
                 <Typography variant="h4" className="total-amount" sx={{ color: '#1976d2', fontWeight: 900, fontSize: '2rem' }}>
-                  ${getCartTotal()}
+                  {getCartTotal() > 0 ? `$${getCartTotal()}` : '免費'}
                 </Typography>
               </Grid>
             </Grid>
@@ -276,11 +348,11 @@ const Cart = () => {
               fullWidth 
               size="large" 
               className="checkout-btn"
-              onClick={handleCheckout}
+              onClick={handleContinue}
               disabled={loading}
               sx={{ mt: 2, fontWeight: 700, fontSize: '1.2rem', borderRadius: '10px' }}
             >
-              {loading ? '處理中...' : '結帳'}
+              {loading ? '處理中...' : '繼續'}
             </Button>
           </Paper>
         </Grid>
@@ -308,6 +380,84 @@ const Cart = () => {
           下單成功！正在跳轉到訂單頁面...
         </Alert>
       </Snackbar>
+
+      <Dialog open={openTimeDialog} onClose={handleTimeDialogClose}>
+        <DialogTitle>選擇交易時間</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="日期"
+            type="date"
+            value={selectedDate.format('YYYY-MM-DD')}
+            onChange={handleDateChange}
+            fullWidth
+            sx={{ my: 2 }}
+            InputLabelProps={{ shrink: true }}
+            inputProps={{ min: dayjs().format('YYYY-MM-DD') }}
+          />
+          <TextField
+            label="上午/下午"
+            select
+            value={amPm}
+            onChange={e => {
+              setAmPm(e.target.value);
+              setHour(e.target.value === 'am' ? '00' : '12');
+              setMinute('');
+            }}
+            fullWidth
+            sx={{ my: 2 }}
+            InputLabelProps={{ shrink: true }}
+          >
+            <MenuItem value="am">上午</MenuItem>
+            <MenuItem value="pm">下午</MenuItem>
+          </TextField>
+          <TextField
+            label="時"
+            select
+            value={hour}
+            onChange={e => {
+              setHour(e.target.value);
+              const mins = getFilteredMinuteOptions();
+              setMinute(mins.length > 0 ? mins[0] : '');
+            }}
+            fullWidth
+            sx={{ my: 2 }}
+            InputLabelProps={{ shrink: true }}
+            disabled={getFilteredHourOptions().length === 0}
+          >
+            {getFilteredHourOptions().map((option) => (
+              <MenuItem key={option} value={option}>{option}</MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            label="分"
+            select
+            value={hour && getFilteredHourOptions().length > 0 ? minute : ''}
+            onChange={e => setMinute(e.target.value)}
+            fullWidth
+            sx={{ my: 2 }}
+            InputLabelProps={{ shrink: true }}
+            disabled={!hour || getFilteredHourOptions().length === 0}
+          >
+            {hour && getFilteredHourOptions().length > 0 && getFilteredMinuteOptions().map((option) => (
+              <MenuItem key={option} value={option}>{option}</MenuItem>
+            ))}
+          </TextField>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleTimeDialogClose}>取消</Button>
+          <Button onClick={handleConfirmCheckout} variant="contained" color="primary">結帳</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={confirmDialog} onClose={handleConfirmDialogClose}>
+        <DialogTitle>確認交易時間</DialogTitle>
+        <DialogContent>
+          <Typography>您選擇的交易時間是：{selectedDate.format('YYYY-MM-DD')} {hour}:{minute}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleConfirmDialogClose}>取消</Button>
+          <Button onClick={handleFinalCheckout} variant="contained" color="primary">確認</Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

@@ -10,7 +10,8 @@ const ProductForm = ({
     category: '',
     stock: '',
     location: '',
-    images: []
+    images: [],
+    condition: '全新'
   }, 
   originalImages = [],
   onSubmit,
@@ -29,6 +30,8 @@ const ProductForm = ({
   const [location, setLocation] = useState(initialValues.location || '');
   const [images, setImages] = useState([]);
   const [imageFiles, setImageFiles] = useState([]);
+  const [condition, setCondition] = useState(initialValues.condition || '全新');
+  const [isGiveaway, setIsGiveaway] = useState(false);
   
   // 輔大宿舍列表
   const dormitoryOptions = [
@@ -140,7 +143,7 @@ const ProductForm = ({
     e.preventDefault();
     
     try {
-      if (!name || !price || !category || !location) {
+      if (!name || !category || !location) {
         throw new Error('請填寫所有必填欄位');
       }
       
@@ -161,11 +164,13 @@ const ProductForm = ({
       onSubmit({
         name,
         description,
-        price: Number(price),
+        price: isGiveaway ? 0 : Number(price),
         category,
         stock: 1,
         location,
-        images: imageBase64List
+        images: imageBase64List,
+        condition,
+        isGiveaway
       });
       
     } catch (err) {
@@ -206,6 +211,22 @@ const ProductForm = ({
           onChange={(e) => setPrice(e.target.value)}
           required 
           min="0"
+          disabled={isGiveaway}
+        />
+      </Form.Group>
+      
+      <Form.Group className="mb-3">
+        <Form.Check 
+          type="switch"
+          id="giveaway-switch"
+          label="贈送模式"
+          checked={isGiveaway}
+          onChange={(e) => {
+            setIsGiveaway(e.target.checked);
+            if (e.target.checked) {
+              setPrice(0);
+            }
+          }}
         />
       </Form.Group>
       
@@ -225,6 +246,18 @@ const ProductForm = ({
           <option value="交通工具">交通工具</option>
           <option value="美妝保養">美妝保養</option>
           <option value="其他">其他</option>
+        </Form.Select>
+      </Form.Group>
+      
+      <Form.Group className="mb-3">
+        <Form.Label>商品狀況 *</Form.Label>
+        <Form.Select value={condition} onChange={e => setCondition(e.target.value)} required>
+          <option value="全新">全新</option>
+          <option value="九成新">九成新</option>
+          <option value="八成新">八成新</option>
+          <option value="七成新">七成新</option>
+          <option value="六成新">六成新</option>
+          <option value="五成新">五成新</option>
         </Form.Select>
       </Form.Group>
       
