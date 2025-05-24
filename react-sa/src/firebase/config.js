@@ -4,12 +4,12 @@ import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 import { getStorage } from "@firebase/storage";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBzhzNbaXc5dnKWurJNgN_BtRWKvbZtIGM",
-  authDomain: "sasb-f7ff8.firebaseapp.com",
-  projectId: "sasb-f7ff8",
-  storageBucket: "sasb-f7ff8.firebasestorage.app",
-  messagingSenderId: "119413315811",
-  appId: "1:119413315811:web:a2d97bbfe2af011b558dd6"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID
 };
 
 // Initialize Firebase
